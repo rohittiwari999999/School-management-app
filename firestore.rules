@@ -1,0 +1,197 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. GLOBAL SAFETY NET: Default-deny catch-all to prevent unmapped collection access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ==========================================
+    // REUSABLE HARDENED PRIMITIVES & ABAC GATES
+    // ==========================================
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    // Super Admin recognition: Auto-recognizes runtime admin email or trusted admin collection
+    function isSuperAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'Rohit.tiwari777@gmail.com' && isVerified()) ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // Helper to retrieve user profile
+    function getUserData(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    // PENDING APPROVAL GATE:
+    // Only approved users can access protected school resources.
+    // Unapproved users cannot bypass the pending approval screen!
+    function isApprovedUser() {
+      return isSignedIn() && (
+        isSuperAdmin() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         getUserData(request.auth.uid).status == 'approved')
+      );
+    }
+
+    function hasRole(targetRole) {
+      return isApprovedUser() && (
+        isSuperAdmin() ||
+        getUserData(request.auth.uid).role == targetRole
+      );
+    }
+
+    // ==========================================
+    // USERS COLLECTION (Strict RBAC & Anti-Tamper)
+    // ==========================================
+    match /users/{userId} {
+      // PII Isolation: Only user themselves, Super Admin, or Principal can view profile
+      allow get: if isSignedIn() && isValidId(userId) && (
+        request.auth.uid == userId ||
+        isSuperAdmin() ||
+        hasRole('principal')
+      );
+
+      // Secure List Query: Staff directory lists only accessible to Principal & Super Admin
+      allow list: if isSuperAdmin() || hasRole('principal');
+
+      // CREATE REGISTRATION RULE:
+      // Users can only register their own profile with 'status == pending' and default role 'parent_student'.
+      // Self-promotion to 'principal' or 'approved' is strictly BLOCKED!
+      // Super Admin is automatically bootstrapped.
+      allow create: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && (
+        isSuperAdmin() ||
+        (
+          incoming().status == 'pending' &&
+          incoming().role == 'parent_student' &&
+          incoming().email == request.auth.token.email &&
+          incoming().fullName is string && incoming().fullName.size() <= 100 &&
+          incoming().schoolId is string && incoming().schoolId.size() <= 64 &&
+          incoming().keys().hasAll(['email', 'fullName', 'role', 'status', 'schoolId']) &&
+          incoming().keys().hasOnly(['email', 'fullName', 'role', 'status', 'schoolId', 'phoneNumber', 'avatarUrl', 'fcmTokens', 'createdAt', 'updatedAt'])
+        )
+      );
+
+      // UPDATE ANTI-TAMPER RULE:
+      // Tier 1 (Super Admin): Full management, can approve users and assign roles.
+      // Tier 2 (User Themselves): Can ONLY update non-privilege profile fields (fullName, phone, avatar, tokens).
+      // Crucial: Role, Status, and SchoolId tampering by clients is MATHEMATICALLY IMPOSSIBLE!
+      allow update: if isSignedIn() && isValidId(userId) && (
+        isSuperAdmin() ||
+        (
+          isApprovedUser() &&
+          request.auth.uid == userId &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'phoneNumber', 'avatarUrl', 'fcmTokens', 'updatedAt']) &&
+          incoming().role == existing().role &&
+          incoming().status == existing().status &&
+          incoming().schoolId == existing().schoolId
+        )
+      );
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // SCHOOL METADATA COLLECTION
+    // ==========================================
+    match /schools/{schoolId} {
+      allow read: if isApprovedUser();
+      allow write: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // ATTENDANCE COLLECTION
+    // ==========================================
+    match /attendance/{attendanceId} {
+      allow read: if isApprovedUser();
+      // Only approved Class Teachers or Principal can commit batch attendance
+      allow create, update: if isApprovedUser() && isValidId(attendanceId) && (
+        isSuperAdmin() ||
+        hasRole('class_teacher') ||
+        hasRole('principal')
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // INVOICES & FINANCIAL LEDGER
+    // ==========================================
+    match /invoices/{invoiceId} {
+      allow read: if isApprovedUser() && isValidId(invoiceId) && (
+        isSuperAdmin() ||
+        hasRole('principal') ||
+        hasRole('accountant') ||
+        resource.data.studentId == request.auth.uid ||
+        resource.data.parentUid == request.auth.uid
+      );
+      // Only Accountant or Principal can generate/update invoices
+      allow create, update: if isApprovedUser() && isValidId(invoiceId) && (
+        isSuperAdmin() ||
+        hasRole('accountant') ||
+        hasRole('principal')
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // EXAMINATIONS & MARKS
+    // ==========================================
+    match /exams/{examId} {
+      allow read: if isApprovedUser() && isValidId(examId);
+      // Only Faculty / Principal can enter exam scores
+      allow create, update: if isApprovedUser() && isValidId(examId) && (
+        isSuperAdmin() ||
+        hasRole('class_teacher') ||
+        hasRole('principal')
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // DIARY, HOMEWORK & CIRCULARS
+    // ==========================================
+    match /diary_entries/{entryId} {
+      allow read: if isApprovedUser() && isValidId(entryId);
+      // Faculty and Principal can post circulars and assignments
+      allow create, update: if isApprovedUser() && isValidId(entryId) && (
+        isSuperAdmin() ||
+        hasRole('class_teacher') ||
+        hasRole('principal')
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // LIVE VIDEO CONFERENCES & WEBRTC SESSIONS
+    // ==========================================
+    match /conferences/{sessionId} {
+      allow read: if isApprovedUser() && isValidId(sessionId);
+      allow create, update: if isApprovedUser() && isValidId(sessionId) && (
+        isSuperAdmin() ||
+        hasRole('class_teacher') ||
+        hasRole('principal')
+      );
+      allow delete: if isSuperAdmin();
+    }
+  }
+}

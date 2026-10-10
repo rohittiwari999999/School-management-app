@@ -1,0 +1,8 @@
+# Keystore configuration template for Release Signing
+# In GitHub Actions, these values are populated automatically via repository secrets:
+# KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
+
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyPassword=YOUR_KEY_PASSWORD
+keyAlias=edupulse-release-key
+storeFile=upload-keystore.jks

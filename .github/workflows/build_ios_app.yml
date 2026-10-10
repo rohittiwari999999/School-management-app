@@ -1,0 +1,112 @@
+name: Build iOS IPA & Archive
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      export_method:
+        description: 'iOS Export Method'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - 'development'
+          - 'ad-hoc'
+          - 'app-store'
+
+jobs:
+  build-ios:
+    name: Build iOS Application (IPA)
+    runs-on: macos-14 # Apple Silicon M2 runner
+    timeout-minutes: 75
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode Version
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Set up Flutter SDK (Stable)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.x'
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-macos-:channel:-:version:'
+
+      - name: Set up CocoaPods
+        run: |
+          sudo gem install cocoapods
+          pod --version
+
+      - name: Install Project Dependencies
+        working-directory: flutter_sms_enterprise
+        run: |
+          flutter pub get
+
+      - name: Install CocoaPods Dependencies
+        working-directory: flutter_sms_enterprise/ios
+        run: |
+          pod install --repo-update
+
+      - name: Setup Apple Distribution Certificate & Profile
+        if: env.BUILD_CERTIFICATE_BASE64 != ''
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
+          P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
+          BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create temporary keychain
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Import distribution certificate
+          CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
+          echo "$BUILD_CERTIFICATE_BASE64" | base64 --decode > $CERTIFICATE_PATH
+          security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+
+          # Install mobileprovision profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.mobileprovision
+
+      - name: Build iOS Application (No Codesign for Unsigned Artifacts)
+        if: env.BUILD_CERTIFICATE_BASE64 == ''
+        working-directory: flutter_sms_enterprise
+        run: |
+          flutter build ios --release --no-codesign
+
+      - name: Package Payload to .IPA
+        if: env.BUILD_CERTIFICATE_BASE64 == ''
+        working-directory: flutter_sms_enterprise/build/ios/iphoneos
+        run: |
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r EduPulse_iOS_Release_Unsigned.ipa Payload/
+
+      - name: Build Signed IPA with ExportOptions (When Signed)
+        if: env.BUILD_CERTIFICATE_BASE64 != ''
+        working-directory: flutter_sms_enterprise
+        run: |
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+      - name: Upload iOS Build Artifact (IPA)
+        uses: actions/upload-artifact@v4
+        with:
+          name: edupulse-ios-release-ipa
+          path: |
+            flutter_sms_enterprise/build/ios/iphoneos/*.ipa
+            flutter_sms_enterprise/build/ios/archive/*.xcarchive
+          retention-days: 14

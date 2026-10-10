@@ -1,0 +1,106 @@
+name: Build Android APK & AAB (Release)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build artifact type'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - 'both'
+          - 'apk_only'
+          - 'aab_only'
+
+jobs:
+  build-android:
+    name: Build Android Release Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java Development Kit (JDK 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Set up Flutter SDK (Stable)
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.x'
+          channel: 'stable'
+          cache: true
+          cache-key: 'flutter-:os:-:channel:-:version:'
+
+      - name: Verify Flutter & System Environment
+        run: |
+          flutter --version
+          flutter doctor -v
+
+      - name: Install Project Dependencies
+        working-directory: flutter_sms_enterprise
+        run: |
+          flutter pub get
+
+      - name: Run Static Analysis & Lints
+        working-directory: flutter_sms_enterprise
+        run: |
+          flutter analyze --no-fatal-infos
+
+      - name: Setup Keystore & Signing Credentials
+        if: env.KEYSTORE_BASE64 != ''
+        working-directory: flutter_sms_enterprise/android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > app/upload-keystore.jks
+          cat <<EOF > key.properties
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+
+      - name: Build Android Release APK (Split Per ABI)
+        if: github.event.inputs.build_type != 'aab_only'
+        working-directory: flutter_sms_enterprise
+        run: |
+          flutter build apk --release --split-per-abi
+
+      - name: Build Android App Bundle (AAB for Google Play Console)
+        if: github.event.inputs.build_type != 'apk_only'
+        working-directory: flutter_sms_enterprise
+        run: |
+          flutter build appbundle --release
+
+      - name: Upload Release APKs
+        if: github.event.inputs.build_type != 'aab_only'
+        uses: actions/upload-artifact@v4
+        with:
+          name: edupulse-release-apks
+          path: flutter_sms_enterprise/build/app/outputs/flutter-apk/*.apk
+          retention-days: 14
+
+      - name: Upload Release App Bundle (AAB)
+        if: github.event.inputs.build_type != 'apk_only'
+        uses: actions/upload-artifact@v4
+        with:
+          name: edupulse-release-aab
+          path: flutter_sms_enterprise/build/app/outputs/bundle/release/*.aab
+          retention-days: 14

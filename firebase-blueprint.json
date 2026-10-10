@@ -1,0 +1,162 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile & RBAC Entity",
+      "description": "Normalized user entity with role boundaries, school association, and approval state.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "fullName": { "type": "string", "maxLength": 100 },
+        "role": {
+          "type": "string",
+          "enum": ["principal", "class_teacher", "parent_student", "accountant"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "approved", "suspended"]
+        },
+        "schoolId": { "type": "string", "maxLength": 64 },
+        "phoneNumber": { "type": "string", "maxLength": 20 },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "fcmTokens": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "fullName", "role", "status", "schoolId"]
+    },
+    "School": {
+      "title": "School Entity",
+      "description": "Educational institution metadata and configuration.",
+      "type": "object",
+      "properties": {
+        "schoolId": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 200 },
+        "affiliationNumber": { "type": "string", "maxLength": 64 },
+        "address": { "type": "string", "maxLength": 300 },
+        "activeAcademicYear": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["schoolId", "name", "affiliationNumber"]
+    },
+    "AttendanceRecord": {
+      "title": "Batch Attendance Record",
+      "description": "Atomic daily roll-call record for a specific class and section.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "classId": { "type": "string", "maxLength": 32 },
+        "sectionId": { "type": "string", "maxLength": 16 },
+        "recordedBy": { "type": "string", "maxLength": 128 },
+        "records": { "type": "object" },
+        "presentCount": { "type": "number" },
+        "absentCount": { "type": "number" },
+        "leaveCount": { "type": "number" }
+      },
+      "required": ["date", "classId", "sectionId", "recordedBy", "records"]
+    },
+    "Invoice": {
+      "title": "Student Fee Invoice",
+      "description": "Term invoice line items, fine calculation, and payment status.",
+      "type": "object",
+      "properties": {
+        "invoiceId": { "type": "string", "maxLength": 64 },
+        "schoolId": { "type": "string", "maxLength": 64 },
+        "studentId": { "type": "string", "maxLength": 64 },
+        "studentName": { "type": "string", "maxLength": 100 },
+        "classId": { "type": "string", "maxLength": 32 },
+        "term": { "type": "string", "maxLength": 64 },
+        "subtotal": { "type": "number" },
+        "totalPayable": { "type": "number" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "paid", "partial"]
+        },
+        "dueDate": { "type": "string" }
+      },
+      "required": ["invoiceId", "schoolId", "studentId", "totalPayable", "status"]
+    },
+    "Exam": {
+      "title": "Academic Exam & Marks Record",
+      "description": "Comprehensive evaluation marks and grade record.",
+      "type": "object",
+      "properties": {
+        "examId": { "type": "string", "maxLength": 64 },
+        "classId": { "type": "string", "maxLength": 32 },
+        "term": { "type": "string", "maxLength": 64 },
+        "studentId": { "type": "string", "maxLength": 64 },
+        "totalObtained": { "type": "number" },
+        "totalMaximum": { "type": "number" },
+        "overallGrade": { "type": "string", "maxLength": 16 },
+        "passed": { "type": "boolean" }
+      },
+      "required": ["examId", "classId", "studentId", "totalObtained", "passed"]
+    },
+    "DiaryEntry": {
+      "title": "Homework & Circular Diary Entry",
+      "description": "Notice board circulars and student homework entries.",
+      "type": "object",
+      "properties": {
+        "entryId": { "type": "string", "maxLength": 64 },
+        "schoolId": { "type": "string", "maxLength": 64 },
+        "classId": { "type": "string", "maxLength": 32 },
+        "title": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "type": {
+          "type": "string",
+          "enum": ["homework", "notice", "circular", "observation"]
+        },
+        "authorUid": { "type": "string", "maxLength": 128 },
+        "isEmergencyCircular": { "type": "boolean" }
+      },
+      "required": ["entryId", "schoolId", "classId", "title", "type", "authorUid"]
+    },
+    "LiveConference": {
+      "title": "Live Video Conference Session",
+      "description": "WebRTC classroom session or executive school broadcast.",
+      "type": "object",
+      "properties": {
+        "sessionId": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "maxLength": 200 },
+        "classId": { "type": "string", "maxLength": 32 },
+        "hostUid": { "type": "string", "maxLength": 128 },
+        "hostRole": { "type": "string", "maxLength": 32 },
+        "status": {
+          "type": "string",
+          "enum": ["live", "scheduled", "ended"]
+        },
+        "roomCode": { "type": "string", "maxLength": 32 }
+      },
+      "required": ["sessionId", "title", "classId", "hostUid", "status"]
+    }
+  },
+  "firestore": {
+    "/schools/{schoolId}": {
+      "schema": { "$ref": "#/entities/School" },
+      "description": "School organizational root document."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles with strict anti-tamper role and approval gating."
+    },
+    "/attendance/{attendanceId}": {
+      "schema": { "$ref": "#/entities/AttendanceRecord" },
+      "description": "Daily roll-call batch writes by class teachers."
+    },
+    "/invoices/{invoiceId}": {
+      "schema": { "$ref": "#/entities/Invoice" },
+      "description": "Fee invoices managed by accountant and viewed by parents/students."
+    },
+    "/exams/{examId}": {
+      "schema": { "$ref": "#/entities/Exam" },
+      "description": "Evaluation marks entered by teachers and inspected by students."
+    },
+    "/diary_entries/{entryId}": {
+      "schema": { "$ref": "#/entities/DiaryEntry" },
+      "description": "Homework, circulars, and pre-primary observation records."
+    },
+    "/conferences/{sessionId}": {
+      "schema": { "$ref": "#/entities/LiveConference" },
+      "description": "Live video classrooms hosted by faculty and joined by students."
+    }
+  }
+}

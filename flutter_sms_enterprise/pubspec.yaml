@@ -1,0 +1,59 @@
+name: edupulse_sms
+description: "A comprehensive K-12 School Management System catering to Nursery to 12th Standard."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+  flutter: ">=3.16.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management & Dependency Injection
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Routing
+  go_router: ^13.2.0
+
+  # Firebase Suite
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.8
+  cloud_firestore: ^4.15.8
+  firebase_storage: ^11.6.9
+  firebase_messaging: ^14.7.19
+
+  # Local Cache & Offline First
+  hive_flutter: ^1.1.0
+
+  # Utilities & Networking
+  intl: ^0.19.0
+  uuid: ^4.3.3
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+
+  # UI & Design System
+  google_fonts: ^6.1.0
+  flutter_svg: ^2.0.10+1
+  cached_network_image: ^3.3.1
+  badges: ^3.1.2
+  shimmer: ^3.0.0
+  pdf: ^3.10.7
+  printing: ^5.12.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.8
+  freezed: ^2.4.7
+  json_serializable: ^6.7.1
+  riverpod_generator: ^2.4.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/

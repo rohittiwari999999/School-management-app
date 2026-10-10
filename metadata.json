@@ -1,0 +1,6 @@
+{
+  "name": "EduPulse ERP - K-12 School Management System & Flutter Mobile Architecture",
+  "description": "Enterprise K-12 Educational ERP and Flutter Mobile Architecture Suite featuring Multi-Role RBAC, CCE & stream grading, attendance roll-call, timetable conflict engine, fee invoicing, and live Firebase integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
