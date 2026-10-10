@@ -142,4 +142,9 @@ class GradingCalculator {
       failedSubjects: failed,
     );
   }
+
+  /// Convenience method for secondary grade calculation
+  static ExamReportCardResult calculateSecondaryGrade(List<SubjectMark> subjectMarks) {
+    return calculateReportCard(subjectMarks: subjectMarks);
+  }
 }

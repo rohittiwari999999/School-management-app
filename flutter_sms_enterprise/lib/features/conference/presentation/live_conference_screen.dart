@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:edupulse_sms/core/constants/app_constants.dart';
 import 'package:edupulse_sms/features/conference/data/conference_repository.dart';
 import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
 
@@ -48,8 +47,6 @@ class _LiveConferenceScreenState extends ConsumerState<LiveConferenceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       backgroundColor: const Color(0xFF0F172A),
       appBar: AppBar(
@@ -248,7 +245,7 @@ class _LiveConferenceScreenState extends ConsumerState<LiveConferenceScreen> {
                                 border: Border(bottom: BorderSide(color: Colors.white10)),
                               ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.between,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   const Text(
                                     'In-Call Messages',

@@ -21,7 +21,6 @@ class AppTheme {
         primary: primaryBlue,
         secondary: secondaryIndigo,
         surface: cardSurface,
-        background: bgSurface,
         error: dangerRose,
         brightness: Brightness.light,
       ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:edupulse_sms/core/constants/app_constants.dart';
 import 'package:edupulse_sms/features/attendance/data/attendance_repository.dart';
 import 'package:edupulse_sms/features/conference/data/conference_repository.dart';
 import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
@@ -191,7 +190,7 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.slate[200] ?? Colors.black12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
               boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
             ),
             child: Row(
@@ -226,7 +225,7 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
           // Attendance Counts Summary Bar
           Row(
             children: [
-              _buildCountBadge('Present', presentCount, Colors.emerald ?? Colors.green),
+              _buildCountBadge('Present', presentCount, const Color(0xFF10B981)),
               const SizedBox(width: 8),
               _buildCountBadge('Absent', absentCount, Colors.red),
               const SizedBox(width: 8),
@@ -258,7 +257,7 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.slate[200] ?? Colors.black12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: Row(
                   children: [

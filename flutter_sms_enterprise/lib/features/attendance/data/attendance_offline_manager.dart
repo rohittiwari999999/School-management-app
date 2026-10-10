@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:edupulse_sms/core/constants/app_constants.dart';
 import 'package:edupulse_sms/core/network/firebase_service.dart';
 import 'attendance_repository.dart';
 

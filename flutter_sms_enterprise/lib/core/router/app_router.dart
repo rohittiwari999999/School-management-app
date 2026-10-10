@@ -10,6 +10,7 @@ import 'package:edupulse_sms/features/fees/presentation/accountant_dashboard_scr
 import 'package:edupulse_sms/features/exams/presentation/exam_results_screen.dart';
 import 'package:edupulse_sms/features/timetable/presentation/timetable_screen.dart';
 import 'package:edupulse_sms/features/communication/presentation/communication_screen.dart';
+import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
 import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -97,10 +98,56 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/conference',
-        builder: (context, state) => const LiveConferenceScreen(
-          channelName: 'CONF_ROOM_001',
-          userName: 'Faculty / Scholar',
-        ),
+        builder: (context, state) {
+          final extra = state.extra;
+          LiveConferenceModel conf;
+          bool isHost = false;
+
+          if (extra is Map<String, dynamic>) {
+            conf = extra['conference'] as LiveConferenceModel? ??
+                LiveConferenceModel(
+                  sessionId: 'CONF_DEFAULT',
+                  title: 'Class 11-A Physics • Ray Optics',
+                  subjectName: 'Physics',
+                  classId: 'CLS_11',
+                  className: 'Class 11-A',
+                  hostUid: 'USR_TEACHER_01',
+                  hostName: 'Dr. Ananya Sen',
+                  hostRole: 'Faculty',
+                  status: ConferenceStatus.live,
+                  startTime: DateTime.now(),
+                  durationMinutes: 45,
+                  participantsCount: 1,
+                  meetingType: MeetingType.classLesson,
+                  roomCode: 'PHY-11A-LIVE',
+                );
+            isHost = extra['isHost'] as bool? ?? false;
+          } else if (extra is LiveConferenceModel) {
+            conf = extra;
+          } else {
+            conf = LiveConferenceModel(
+              sessionId: 'CONF_DEFAULT',
+              title: 'Class 11-A Physics • Ray Optics',
+              subjectName: 'Physics',
+              classId: 'CLS_11',
+              className: 'Class 11-A',
+              hostUid: 'USR_TEACHER_01',
+              hostName: 'Dr. Ananya Sen',
+              hostRole: 'Faculty',
+              status: ConferenceStatus.live,
+              startTime: DateTime.now(),
+              durationMinutes: 45,
+              participantsCount: 1,
+              meetingType: MeetingType.classLesson,
+              roomCode: 'PHY-11A-LIVE',
+            );
+          }
+
+          return LiveConferenceScreen(
+            conference: conf,
+            isHost: isHost,
+          );
+        },
       ),
     ],
   );
