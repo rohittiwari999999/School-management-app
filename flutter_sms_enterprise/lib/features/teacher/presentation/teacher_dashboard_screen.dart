@@ -577,7 +577,7 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
                         border: Border.all(color: Colors.green.shade300),
                       ),
                       child: Text(
-                        gradeResult.primaryGrade,
+                        gradeResult.overallGrade,
                         style: TextStyle(color: Colors.green.shade800, fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
@@ -589,7 +589,7 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
                   children: [
                     const Text('Cumulative GPA (10 Pt Scale):', style: TextStyle(fontSize: 13, color: Colors.grey)),
                     Text(
-                      gradeResult.gpa.toStringAsFixed(2),
+                      gradeResult.cumulativeGpa.toStringAsFixed(2),
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.blueAccent),
                     ),
                   ],

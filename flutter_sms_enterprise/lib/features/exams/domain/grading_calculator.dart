@@ -66,6 +66,10 @@ class ExamReportCardResult {
     required this.passedSubjects,
     required this.failedSubjects,
   });
+
+  /// Alias getters for backwards and UI compatibility
+  String get primaryGrade => overallGrade;
+  double get gpa => cumulativeGpa;
 }
 
 class GradingCalculator {
