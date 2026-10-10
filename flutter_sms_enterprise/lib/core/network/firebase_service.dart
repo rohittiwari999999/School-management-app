@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -15,17 +16,39 @@ class FirebaseService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final FirebaseStorage storage = FirebaseStorage.instance;
   final FirebaseMessaging messaging = FirebaseMessaging.instance;
+  final FirebaseAppCheck appCheck = FirebaseAppCheck.instance;
 
-  /// Initialize offline cache and cloud messaging permissions
+  /// Initialize Firebase App Check, Firestore offline persistence cache,
+  /// and cloud messaging permissions.
   Future<void> initialize() async {
     try {
-      // Enable offline persistence settings for Firestore
+      // 1. Firebase App Check using Google Play Integrity & Apple DeviceCheck
+      // Strictly enforces that all incoming Firestore & Cloud Function requests
+      // originate exclusively from the official, verified production Flutter binary.
+      await appCheck.activate(
+        // Play Integrity provider for Android (verifies APK signature & Play licensing)
+        androidProvider: kReleaseMode
+            ? AndroidProvider.playIntegrity
+            : AndroidProvider.debug,
+        // DeviceCheck provider for iOS (attests device identity with Apple DeviceCheck service)
+        appleProvider: kReleaseMode
+            ? AppleProvider.deviceCheck
+            : AppleProvider.debug,
+      );
+
+      debugPrint('Firebase App Check successfully activated with Play Integrity / DeviceCheck');
+
+      // 2. Heavily utilize Firestore's built-in offline persistence cache
+      // The teacher can submit attendance anywhere without connectivity.
+      // Firestore queues local writes and syncs to Firebase the second they walk into Wi-Fi.
       firestore.settings = const Settings(
         persistenceEnabled: true,
         cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
       );
 
-      // Notification permissions
+      debugPrint('Firestore offline persistence cache enabled (persistenceEnabled: true)');
+
+      // 3. Notification permissions for administrative & school broadcasts
       final settings = await messaging.requestPermission(
         alert: true,
         badge: true,
@@ -35,7 +58,17 @@ class FirebaseService {
 
       debugPrint('FCM Notification authorization status: ${settings.authorizationStatus}');
     } catch (e) {
-      debugPrint('Firebase service initialization notice: $e');
+      debugPrint('Firebase service initialization error / notice: $e');
+    }
+  }
+
+  /// Get active Firebase App Check token for debugging / backend headers
+  Future<String?> getAppCheckToken() async {
+    try {
+      return await appCheck.getToken();
+    } catch (e) {
+      debugPrint('Error getting App Check token: $e');
+      return null;
     }
   }
 

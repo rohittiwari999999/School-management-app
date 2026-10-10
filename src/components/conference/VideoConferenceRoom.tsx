@@ -34,6 +34,8 @@ export const VideoConferenceRoom: React.FC = () => {
 
   const isHost =
     currentUser.uid === activeConference.hostUid ||
+    currentUser.role === 'teacher' ||
+    currentUser.role === 'class_teacher' ||
     currentUser.role === 'principal' ||
     currentUser.role === 'super_admin';
 

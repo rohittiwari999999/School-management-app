@@ -124,13 +124,26 @@ service cloud.firestore {
     // ==========================================
     match /attendance/{attendanceId} {
       allow read: if isApprovedUser();
-      // Only approved Class Teachers or Principal can commit batch attendance
+      // Only approved Teachers, Class Teachers or Principal can commit batch attendance
       allow create, update: if isApprovedUser() && isValidId(attendanceId) && (
         isSuperAdmin() ||
+        hasRole('teacher') ||
         hasRole('class_teacher') ||
         hasRole('principal')
       );
       allow delete: if isSuperAdmin();
+    }
+
+    // ==========================================
+    // DASHBOARD AGGREGATED STATS (Cloud Functions Managed)
+    // ==========================================
+    match /dashboard_stats/{statsId} {
+      // Approved users (Principal, Teachers, Accountant) can read daily aggregated attendance metrics
+      allow read: if isApprovedUser();
+      // Silently updated by Firebase Cloud Functions via Firebase Admin SDK (which bypasses security rules).
+      // Direct client writes are blocked to protect counter integrity from unauthorized tampering.
+      // Emergency write fallback granted to Super Admin.
+      allow write: if isSuperAdmin();
     }
 
     // ==========================================
@@ -161,6 +174,7 @@ service cloud.firestore {
       // Only Faculty / Principal can enter exam scores
       allow create, update: if isApprovedUser() && isValidId(examId) && (
         isSuperAdmin() ||
+        hasRole('teacher') ||
         hasRole('class_teacher') ||
         hasRole('principal')
       );
@@ -175,6 +189,7 @@ service cloud.firestore {
       // Faculty and Principal can post circulars and assignments
       allow create, update: if isApprovedUser() && isValidId(entryId) && (
         isSuperAdmin() ||
+        hasRole('teacher') ||
         hasRole('class_teacher') ||
         hasRole('principal')
       );
@@ -188,6 +203,7 @@ service cloud.firestore {
       allow read: if isApprovedUser() && isValidId(sessionId);
       allow create, update: if isApprovedUser() && isValidId(sessionId) && (
         isSuperAdmin() ||
+        hasRole('teacher') ||
         hasRole('class_teacher') ||
         hasRole('principal')
       );

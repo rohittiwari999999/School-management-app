@@ -3,6 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:edupulse_sms/core/constants/app_constants.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
+import 'package:edupulse_sms/features/teacher/presentation/teacher_dashboard_screen.dart';
+import 'package:edupulse_sms/features/principal/presentation/principal_dashboard_screen.dart';
+import 'package:edupulse_sms/features/parent_student/presentation/family_dashboard_screen.dart';
+import 'package:edupulse_sms/features/fees/presentation/accountant_dashboard_screen.dart';
+import 'package:edupulse_sms/features/exams/presentation/exam_results_screen.dart';
+import 'package:edupulse_sms/features/timetable/presentation/timetable_screen.dart';
+import 'package:edupulse_sms/features/communication/presentation/communication_screen.dart';
+import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
@@ -25,6 +33,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         switch (user.role) {
           case UserRole.principal:
             return '/principal/dashboard';
+          case UserRole.teacher:
           case UserRole.classTeacher:
             return '/teacher/dashboard';
           case UserRole.parentStudent:
@@ -39,7 +48,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (path.startsWith('/principal') && user.role != UserRole.principal) {
         return _getDefaultRouteForRole(user.role);
       }
-      if (path.startsWith('/teacher') && user.role != UserRole.classTeacher) {
+      if (path.startsWith('/teacher') && user.role != UserRole.teacher && user.role != UserRole.classTeacher) {
         return _getDefaultRouteForRole(user.role);
       }
       if (path.startsWith('/family') && user.role != UserRole.parentStudent) {
@@ -60,26 +69,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/principal/dashboard',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Principal & Executive Leadership Console')),
-        ),
+        builder: (context, state) => const PrincipalDashboardScreen(),
       ),
       GoRoute(
         path: '/teacher/dashboard',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Class Teacher Academic & Roll-call Console')),
-        ),
+        builder: (context, state) => const TeacherDashboardScreen(),
       ),
       GoRoute(
         path: '/family/dashboard',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Unified Parent & Student Family Portal')),
-        ),
+        builder: (context, state) => const FamilyDashboardScreen(),
       ),
       GoRoute(
         path: '/accountant/dashboard',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Finance & Invoicing Terminal')),
+        builder: (context, state) => const AccountantDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/exams',
+        builder: (context, state) => const ExamResultsScreen(),
+      ),
+      GoRoute(
+        path: '/timetable',
+        builder: (context, state) => const TimetableScreen(),
+      ),
+      GoRoute(
+        path: '/communication',
+        builder: (context, state) => const CommunicationScreen(),
+      ),
+      GoRoute(
+        path: '/conference',
+        builder: (context, state) => const LiveConferenceScreen(
+          channelName: 'CONF_ROOM_001',
+          userName: 'Faculty / Scholar',
         ),
       ),
     ],
@@ -90,6 +110,7 @@ String _getDefaultRouteForRole(UserRole role) {
   switch (role) {
     case UserRole.principal:
       return '/principal/dashboard';
+    case UserRole.teacher:
     case UserRole.classTeacher:
       return '/teacher/dashboard';
     case UserRole.parentStudent:

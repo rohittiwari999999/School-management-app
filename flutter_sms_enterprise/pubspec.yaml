@@ -24,6 +24,7 @@ dependencies:
   cloud_firestore: ^4.15.8
   firebase_storage: ^11.6.9
   firebase_messaging: ^14.7.19
+  firebase_app_check: ^0.2.1+17
 
   # Local Cache & Offline First
   hive_flutter: ^1.1.0

@@ -119,14 +119,14 @@ export const ParentStudentDashboard: React.FC = () => {
           <div>
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-semibold mb-2 border border-purple-400/30">
               <Users className="w-3.5 h-3.5" />
-              <span>Unified Parent & Student Portal</span>
+              <span>Parent Portal (Family & Guardian)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Family & Scholar Access Terminal
+              Parent & Family Access Terminal
             </h1>
             <p className="text-slate-300 text-sm mt-1 max-w-2xl">
-              Combined workspace for parents & students. Access daily timetables, CCE report cards,
-              homework, teacher messaging, Nursery care logs, and fee invoicing under one login.
+              Family workspace for parents to monitor student progress. Access daily timetables, CCE report cards,
+              homework, teacher messaging, Nursery care logs, and fee invoicing under one parent account.
             </p>
           </div>
 

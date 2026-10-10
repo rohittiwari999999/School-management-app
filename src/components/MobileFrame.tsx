@@ -36,6 +36,7 @@ export const MobileFrame: React.FC = () => {
       case 'super_admin':
         return <AdminDashboard />;
       case 'teacher':
+      case 'class_teacher':
         return <TeacherDashboard />;
       case 'parent_student':
       case 'student':

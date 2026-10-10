@@ -11,9 +11,12 @@ import {
   Database,
   Flame,
   ShieldCheck,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { UserRole } from '../types';
 import { SecurityAuditModal } from './security/SecurityAuditModal';
+import { PhaseRoadmapModal } from './PhaseRoadmapModal';
 
 export const Header: React.FC = () => {
   const {
@@ -24,9 +27,13 @@ export const Header: React.FC = () => {
     setViewMode,
     deviceType,
     setDeviceType,
+    isNetworkOnline,
+    toggleNetworkOnline,
+    offlineSyncQueue,
   } = useSMS();
 
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [showPhaseModal, setShowPhaseModal] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 text-white shadow-xl">
@@ -97,6 +104,35 @@ export const Header: React.FC = () => {
 
           {/* Current Active Persona & Role Indicator */}
           <div className="flex items-center space-x-3">
+            {/* Wi-Fi Zone & Offline Persistence Toggle */}
+            <button
+              onClick={toggleNetworkOnline}
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg border text-xs transition-all shadow-sm cursor-pointer ${
+                isNetworkOnline
+                  ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300 hover:bg-emerald-900/80'
+                  : 'bg-amber-950/80 border-amber-500/50 text-amber-300 hover:bg-amber-900/90 animate-pulse'
+              }`}
+              title={
+                isNetworkOnline
+                  ? 'Campus Wi-Fi Zone Active • Direct sync to Firebase'
+                  : `Offline Mode • ${offlineSyncQueue.length} batches queued in Firestore persistence cache. Click to simulate walking into Wi-Fi zone!`
+              }
+            >
+              {isNetworkOnline ? (
+                <>
+                  <Wifi className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="font-semibold hidden sm:inline">Wi-Fi Zone</span>
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="font-semibold hidden sm:inline">
+                    Offline {offlineSyncQueue.length > 0 ? `(${offlineSyncQueue.length} Queued)` : ''}
+                  </span>
+                </>
+              )}
+            </button>
+
             <button
               onClick={() => setShowSecurityModal(true)}
               className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-500/40 text-emerald-300 text-xs transition-all shadow-sm cursor-pointer"
@@ -105,6 +141,17 @@ export const Header: React.FC = () => {
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span className="font-mono font-medium hidden sm:inline">Firestore ABAC Active</span>
               <span className="font-mono font-medium sm:hidden">ABAC</span>
+            </button>
+
+            {/* Phase 1 & Phase 2 Roadmap Status Button */}
+            <button
+              onClick={() => setShowPhaseModal(true)}
+              className="flex items-center space-x-1 px-2.5 py-1 rounded-lg bg-gradient-to-r from-emerald-950/80 to-blue-950/80 hover:from-emerald-900/80 hover:to-blue-900/80 border border-indigo-500/40 text-indigo-300 text-xs transition-all shadow-sm cursor-pointer"
+              title="Inspect Phase 1 and Phase 2 Architecture Milestones & Live Status"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span className="font-semibold hidden sm:inline">Phase 1 & 2: 100%</span>
+              <span className="font-semibold sm:hidden">Ph 1&2</span>
             </button>
 
             <div className="flex items-center space-x-2 pl-2 border-l border-slate-700">
@@ -138,47 +185,53 @@ export const Header: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 sm:pb-0">
-            {users.map((u) => {
-              const isSelected = currentUser.uid === u.uid;
-              let roleBadge = '';
-              let badgeColor = '';
-              switch (u.role) {
-                case 'principal':
-                case 'super_admin':
-                  roleBadge = 'Principal';
-                  badgeColor = 'from-amber-500 to-orange-600';
-                  break;
-                case 'teacher':
-                  roleBadge = 'Class Teacher';
-                  badgeColor = 'from-blue-600 to-cyan-600';
-                  break;
-                case 'parent_student':
-                case 'parent':
-                case 'student':
-                  roleBadge = 'Parent & Student';
-                  badgeColor = 'from-purple-600 to-pink-600';
-                  break;
-                case 'accountant':
-                  roleBadge = 'Accountant';
-                  badgeColor = 'from-rose-600 to-red-600';
-                  break;
-              }
+            {users
+              .filter((u) => u.role !== 'student')
+              .map((u) => {
+                const isSelected = currentUser.uid === u.uid;
+                let roleBadge = '';
+                let badgeColor = '';
+                switch (u.role) {
+                  case 'principal':
+                  case 'super_admin':
+                    roleBadge = 'Principal';
+                    badgeColor = 'from-amber-500 to-orange-600';
+                    break;
+                  case 'teacher':
+                    roleBadge = 'Teacher Dashboard';
+                    badgeColor = 'from-blue-600 to-indigo-600';
+                    break;
+                  case 'class_teacher':
+                    roleBadge = 'Class Teacher';
+                    badgeColor = 'from-teal-600 to-cyan-600';
+                    break;
+                  case 'parent_student':
+                  case 'parent':
+                    roleBadge = 'Parent';
+                    badgeColor = 'from-purple-600 to-pink-600';
+                    break;
+                  case 'accountant':
+                    roleBadge = 'Accountant';
+                    badgeColor = 'from-rose-600 to-red-600';
+                    break;
+                }
 
-              return (
-                <button
-                  key={u.uid}
-                  onClick={() => setCurrentUser(u)}
-                  className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                    isSelected
-                      ? `bg-gradient-to-r ${badgeColor} text-white shadow-sm ring-2 ring-white/20`
-                      : 'bg-slate-800/70 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/50'
-                  }`}
-                >
-                  <span className="font-semibold">{roleBadge}</span>
-                  <span className="text-[10px] opacity-80 hidden md:inline">({u.fullName.split(' ')[0]})</span>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={u.uid}
+                    onClick={() => setCurrentUser(u)}
+                    className={`flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      isSelected
+                        ? `bg-gradient-to-r ${badgeColor} text-white shadow-md ring-2 ring-white/30 font-bold scale-[1.02]`
+                        : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700 hover:text-white border border-slate-700/60'
+                    }`}
+                    title={`Switch to ${roleBadge}: ${u.fullName} (${u.designation || u.role})`}
+                  >
+                    <span className="font-semibold">{roleBadge}</span>
+                    <span className="text-[10px] opacity-80 hidden xl:inline">({u.fullName.split(' ')[0]})</span>
+                  </button>
+                );
+              })}
           </div>
 
           {/* Device Frame selector if mobile view is chosen */}
@@ -218,6 +271,12 @@ export const Header: React.FC = () => {
       <SecurityAuditModal
         isOpen={showSecurityModal}
         onClose={() => setShowSecurityModal(false)}
+      />
+
+      {/* Phase 1 & Phase 2 Delivery Roadmap Modal */}
+      <PhaseRoadmapModal
+        isOpen={showPhaseModal}
+        onClose={() => setShowPhaseModal(false)}
       />
     </header>
   );

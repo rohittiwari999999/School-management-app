@@ -22,6 +22,95 @@ interface CodeFile {
 
 const FLUTTER_CODE_DATABASE: CodeFile[] = [
   {
+    path: 'functions/src/index.ts',
+    name: 'index.ts (Cloud Function)',
+    category: 'Cloud Functions',
+    content: `import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
+
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+const db = admin.firestore();
+
+/**
+ * Server-side Data Aggregator:
+ * Whenever a teacher submits attendance in attendance/{attendanceId},
+ * this Cloud Function silently increments a single presentCount integer
+ * in the dashboard_stats/today document.
+ */
+export const aggregateAttendanceOnWrite = onDocumentWritten(
+  'attendance/{attendanceId}',
+  async (event) => {
+    const beforeData = event.data?.before.data();
+    const afterData = event.data?.after.data();
+
+    const oldPresent = Number(beforeData?.presentCount || 0);
+    const newPresent = Number(afterData?.presentCount || 0);
+    const delta = newPresent - oldPresent;
+
+    if (delta === 0) return;
+
+    // Silently increment the single presentCount integer in dashboard_stats/today
+    const todayStatsRef = db.doc('dashboard_stats/today');
+    await todayStatsRef.set(
+      {
+        presentCount: FieldValue.increment(delta),
+        lastAggregatedRecordId: event.params.attendanceId,
+        lastUpdated: FieldValue.serverTimestamp(),
+        targetDate: afterData?.date || new Date().toISOString().split('T')[0],
+      },
+      { merge: true }
+    );
+  }
+);`,
+  },
+  {
+    path: 'functions/package.json',
+    name: 'package.json (Functions)',
+    category: 'Cloud Functions',
+    content: `{
+  "name": "edupulse-cloud-functions",
+  "version": "1.0.0",
+  "engines": {
+    "node": "18 || 20"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^5.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "deploy": "firebase deploy --only functions"
+  }
+}`,
+  },
+  {
+    path: 'firestore.rules',
+    name: 'firestore.rules',
+    category: 'Security Rules',
+    content: `// Aggregated Dashboard Stats (Cloud Functions Managed)
+match /dashboard_stats/{statsId} {
+  // Approved faculty, admin & staff can read daily aggregated metrics
+  allow read: if isApprovedUser();
+  // Direct client writes are BLOCKED to prevent counter tampering!
+  // Silently incremented exclusively by Firebase Cloud Functions via Admin SDK.
+  allow write: if isSuperAdmin();
+}
+
+// Attendance Collection
+match /attendance/{attendanceId} {
+  allow read: if isApprovedUser();
+  allow create, update: if isApprovedUser() && (
+    isSuperAdmin() || hasRole('teacher') || hasRole('class_teacher') || hasRole('principal')
+  );
+  allow delete: if isSuperAdmin();
+}`,
+  },
+  {
     path: 'pubspec.yaml',
     name: 'pubspec.yaml',
     category: 'Project Config',
@@ -51,8 +140,9 @@ dependencies:
   cloud_firestore: ^4.15.8
   firebase_storage: ^11.6.9
   firebase_messaging: ^14.7.19
+  firebase_app_check: ^0.2.1+17
 
-  # Local Caching & Offline-First
+  # Local Caching & Offline-First (persistenceEnabled & Hive)
   hive_flutter: ^1.1.0
 
   # Utilities
@@ -187,6 +277,7 @@ String _getDefaultRouteForRole(UserRole role) {
     name: 'firebase_service.dart',
     category: 'Firebase Core',
     content: `import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -202,15 +293,34 @@ class FirebaseService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final FirebaseStorage storage = FirebaseStorage.instance;
   final FirebaseMessaging messaging = FirebaseMessaging.instance;
+  final FirebaseAppCheck appCheck = FirebaseAppCheck.instance;
 
   Future<void> initialize() async {
     try {
-      // Enable offline persistence settings for Firestore
+      // 1. Firebase App Check using Google Play Integrity & Apple DeviceCheck
+      // Strictly enforces that all incoming Firestore & Cloud Function requests
+      // originate exclusively from the official, compiled Flutter app downloaded from
+      // the Google Play Store (Android) or Apple App Store (iOS).
+      await appCheck.activate(
+        androidProvider: kReleaseMode
+            ? AndroidProvider.playIntegrity
+            : AndroidProvider.debug,
+        appleProvider: kReleaseMode
+            ? AppleProvider.deviceCheck
+            : AppleProvider.debug,
+      );
+      debugPrint('Firebase App Check: Play Integrity & DeviceCheck active');
+
+      // 2. Heavily utilize Firestore built-in offline persistence cache
+      // Teachers submit attendance anywhere offline; queues writes locally and syncs
+      // to Firebase the second they walk into a Wi-Fi zone.
       firestore.settings = const Settings(
         persistenceEnabled: true,
         cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
       );
+      debugPrint('Firestore offline cache: persistenceEnabled = true');
 
+      // 3. Notification permissions
       final settings = await messaging.requestPermission(
         alert: true,
         badge: true,
@@ -218,7 +328,15 @@ class FirebaseService {
       );
       debugPrint('FCM Authorization: \${settings.authorizationStatus}');
     } catch (e) {
-      debugPrint('Firebase init: \$e');
+      debugPrint('Firebase init notice: \$e');
+    }
+  }
+
+  Future<String?> getAppCheckToken() async {
+    try {
+      return await appCheck.getToken();
+    } catch (e) {
+      return null;
     }
   }
 
@@ -291,6 +409,104 @@ class AttendanceRepository {
     }, SetOptions(merge: true));
 
     await batch.commit();
+  }
+}`,
+  },
+  {
+    path: 'lib/features/attendance/data/attendance_offline_manager.dart',
+    name: 'attendance_offline_manager.dart',
+    category: 'Attendance Engine',
+    content: `import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:edupulse_sms/core/network/firebase_service.dart';
+import 'attendance_repository.dart';
+
+/// Offline-First Persistence & Automatic Wi-Fi Sync Manager:
+/// 1. Configures Firestore built-in offline persistence cache:
+///    FirebaseFirestore.instance.settings = const Settings(persistenceEnabled: true);
+/// 2. Utilizes Hive (hive_flutter) to store local attendance state and queued writes.
+/// 3. The teacher can submit attendance offline without network.
+/// 4. The app queues the write and syncs it to Firebase the second they walk into a Wi-Fi zone.
+/// 5. On sync, Firebase Cloud Function aggregateAttendanceOnWrite silently increments presentCount.
+class AttendanceOfflineManager {
+  final FirebaseService _firebase;
+  final AttendanceRepository _repo;
+  static const String hiveBoxName = 'attendance_offline_queue';
+  Box? _box;
+
+  AttendanceOfflineManager(this._firebase, this._repo);
+
+  Future<void> initialize() async {
+    // Heavily utilize Firestore offline persistence cache
+    _firebase.firestore.settings = const Settings(
+      persistenceEnabled: true,
+      cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+    );
+
+    // Open local Hive cache box for durable offline queue
+    _box = await Hive.openBox(hiveBoxName);
+  }
+
+  /// Submit roll call attendance offline or online
+  Future<void> submitAttendance({
+    required DateTime date,
+    required String classId,
+    required String sectionId,
+    required String recordedByTeacherUid,
+    required Map<String, AttendanceStatus> studentStatusMap,
+    required bool isOnline,
+  }) async {
+    final docId = _repo.generateDocId(date: date, classId: classId, sectionId: sectionId);
+
+    if (!isOnline) {
+      // Teacher is offline: store locally in Hive and Firestore local cache
+      await _box?.put(docId, {
+        'date': date.toIso8601String(),
+        'classId': classId,
+        'sectionId': sectionId,
+        'recordedBy': recordedByTeacherUid,
+        'records': studentStatusMap.map((k, v) => MapEntry(k, v.code)),
+        'queuedAt': DateTime.now().toIso8601String(),
+      });
+      return;
+    }
+
+    // Direct commit to Cloud Firestore (triggers Cloud Function silently)
+    await _repo.saveBatchAttendance(
+      date: date,
+      classId: classId,
+      sectionId: sectionId,
+      recordedByTeacherUid: recordedByTeacherUid,
+      studentStatusMap: studentStatusMap,
+    );
+  }
+
+  /// Triggered the second the teacher walks into a Wi-Fi zone
+  Future<int> onWiFiZoneConnected() async {
+    if (_box == null || _box!.isEmpty) return 0;
+    int syncedCount = 0;
+
+    for (final key in _box!.keys.toList()) {
+      final raw = _box!.get(key);
+      if (raw != null) {
+        final Map<String, AttendanceStatus> map = {};
+        final records = Map<String, dynamic>.from(raw['records']);
+        records.forEach((k, v) => map[k] = AttendanceStatusExtension.fromCode(v.toString()));
+
+        await _repo.saveBatchAttendance(
+          date: DateTime.parse(raw['date']),
+          classId: raw['classId'],
+          sectionId: raw['sectionId'],
+          recordedByTeacherUid: raw['recordedBy'],
+          studentStatusMap: map,
+        );
+
+        await _box!.delete(key);
+        syncedCount++;
+      }
+    }
+    return syncedCount;
   }
 }`,
   },
@@ -559,6 +775,406 @@ jobs:
     <string>voip</string>
 </array>`,
   },
+  {
+    path: 'lib/features/teacher/presentation/teacher_dashboard_screen.dart',
+    name: 'teacher_dashboard_screen.dart',
+    category: 'Teacher Console',
+    content: `import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/features/attendance/data/attendance_repository.dart';
+import 'package:edupulse_sms/features/conference/data/conference_repository.dart';
+import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
+import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
+import 'package:edupulse_sms/features/exams/domain/grading_calculator.dart';
+
+class TeacherDashboardScreen extends ConsumerStatefulWidget {
+  const TeacherDashboardScreen({super.key});
+
+  @override
+  ConsumerState<TeacherDashboardScreen> createState() => _TeacherDashboardScreenState();
+}
+
+class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  final Map<String, AttendanceStatus> _attendanceMap = {
+    'STU_CLASS11_01': AttendanceStatus.present,
+    'STU_02': AttendanceStatus.present,
+    'STU_03': AttendanceStatus.absent,
+    'STU_04': AttendanceStatus.leave,
+    'STU_05': AttendanceStatus.present,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  void _startLiveClass() async {
+    final newConf = LiveConferenceModel(
+      sessionId: 'CONF_\${DateTime.now().millisecondsSinceEpoch}',
+      title: 'Class 11-A Physics • Ray Optics & Wave Motion',
+      subjectName: 'Physics',
+      classId: 'CLS_11',
+      className: 'Class 11-A (Science)',
+      hostUid: 'USR_TEACHER_01',
+      hostName: 'Ms. Priya Sharma',
+      hostRole: 'Class Teacher',
+      status: ConferenceStatus.live,
+      startTime: DateTime.now(),
+      durationMinutes: 45,
+      participantsCount: 18,
+      meetingType: MeetingType.classLesson,
+      roomCode: 'PHY-11A-LIVE',
+      isRecording: true,
+      topicSummary: 'Refraction through prisms and spherical aberration.',
+    );
+
+    await ref.read(conferenceRepositoryProvider).createConference(newConf);
+
+    if (mounted) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (ctx) => LiveConferenceScreen(conference: newConf, isHost: true),
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0F172A),
+        foregroundColor: Colors.white,
+        title: const Text('Teacher Academic Console'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.video_call, color: Colors.lightBlueAccent, size: 28),
+            onPressed: _startLiveClass,
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.fact_check), text: 'Attendance'),
+            Tab(icon: Icon(Icons.video_camera_front), text: 'Live Class'),
+            Tab(icon: Icon(Icons.calculate), text: 'Grading'),
+            Tab(icon: Icon(Icons.child_care), text: 'Nursery'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildAttendanceTab(),
+          _buildLiveClassTab(),
+          _buildGradingTab(),
+          _buildNurseryTab(),
+        ],
+      ),
+    );
+  }
+}`,
+  },
+  {
+    path: 'lib/features/conference/presentation/live_conference_screen.dart',
+    name: 'live_conference_screen.dart',
+    category: 'Video Conferencing',
+    content: `import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
+
+class LiveConferenceScreen extends ConsumerStatefulWidget {
+  final LiveConferenceModel conference;
+  final bool isHost;
+
+  const LiveConferenceScreen({
+    super.key,
+    required this.conference,
+    required this.isHost,
+  });
+
+  @override
+  ConsumerState<LiveConferenceScreen> createState() => _LiveConferenceScreenState();
+}
+
+class _LiveConferenceScreenState extends ConsumerState<LiveConferenceScreen> {
+  bool _isMicOn = true;
+  bool _isVideoOn = true;
+  bool _isScreenSharing = false;
+  bool _isHandRaised = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0F172A),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1E293B),
+        title: Text(widget.conference.title, style: const TextStyle(color: Colors.white)),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircleAvatar(radius: 40, child: Icon(Icons.videocam, size: 40)),
+            const SizedBox(height: 16),
+            Text(widget.conference.hostName, style: const TextStyle(color: Colors.white, fontSize: 18)),
+            Text('Room: \${widget.conference.roomCode}', style: const TextStyle(color: Colors.white70)),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        color: const Color(0xFF1E293B),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            IconButton(
+              icon: Icon(_isMicOn ? Icons.mic : Icons.mic_off, color: Colors.white),
+              onPressed: () => setState(() => _isMicOn = !_isMicOn),
+            ),
+            IconButton(
+              icon: Icon(_isVideoOn ? Icons.videocam : Icons.videocam_off, color: Colors.white),
+              onPressed: () => setState(() => _isVideoOn = !_isVideoOn),
+            ),
+            IconButton(
+              icon: const Icon(Icons.call_end, color: Colors.redAccent),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}`,
+  },
+  {
+    path: 'lib/features/parent_student/presentation/family_dashboard_screen.dart',
+    name: 'family_dashboard_screen.dart',
+    category: 'Parent & Student',
+    content: `import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
+
+class FamilyDashboardScreen extends ConsumerStatefulWidget {
+  const FamilyDashboardScreen({super.key});
+
+  @override
+  ConsumerState<FamilyDashboardScreen> createState() => _FamilyDashboardScreenState();
+}
+
+class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
+  int _selectedChildIndex = 0;
+  final List<String> _children = ['Aarav (Class 11)', 'Rohan (Class 5)', 'Ananya (Nursery)'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Unified Parent & Student Portal')),
+      body: Column(
+        children: [
+          // Sibling selector
+          SegmentedButton<int>(
+            segments: const [
+              ButtonSegment(value: 0, label: Text('Aarav (11)')),
+              ButtonSegment(value: 1, label: Text('Rohan (5)')),
+              ButtonSegment(value: 2, label: Text('Ananya (Nursery)')),
+            ],
+            selected: {_selectedChildIndex},
+            onSelectionChanged: (s) => setState(() => _selectedChildIndex = s.first),
+          ),
+          // Quick join live class card
+          Card(
+            margin: const EdgeInsets.all(16),
+            child: ListTile(
+              leading: const Icon(Icons.live_tv, color: Colors.red),
+              title: const Text('Live Physics Class Active'),
+              subtitle: const Text('Ms. Priya Sharma • Join Now'),
+              trailing: ElevatedButton(
+                onPressed: () {},
+                child: const Text('Join'),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}`,
+  },
+  {
+    path: 'lib/features/principal/presentation/principal_dashboard_screen.dart',
+    name: 'principal_dashboard_screen.dart',
+    category: 'Principal Console',
+    content: `import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class PrincipalDashboardScreen extends ConsumerWidget {
+  const PrincipalDashboardScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Principal Executive Dashboard')),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const Text('K-12 School Analytics & All-Hands Video Broadcast'),
+          // Live assembly card
+          ElevatedButton.icon(
+            onPressed: () {},
+            icon: const Icon(Icons.broadcast_on_home),
+            label: const Text('Broadcast Morning Assembly'),
+          ),
+        ],
+      ),
+    );
+  }
+}`,
+  },
+  {
+    path: 'lib/features/fees/presentation/accountant_dashboard_screen.dart',
+    name: 'accountant_dashboard_screen.dart',
+    category: 'Fees & Invoicing',
+    content: `import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:edupulse_sms/features/fees/domain/fee_calculator.dart';
+
+class AccountantDashboardScreen extends ConsumerStatefulWidget {
+  const AccountantDashboardScreen({super.key});
+
+  @override
+  ConsumerState<AccountantDashboardScreen> createState() => _AccountantDashboardScreenState();
+}
+
+class _AccountantDashboardScreenState extends ConsumerState<AccountantDashboardScreen> {
+  String _selectedStatus = 'all';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Bursar & Accounts Terminal'),
+        backgroundColor: Colors.indigo.shade900,
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // KPI Financial Summary
+            Card(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: const Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total Billed: ₹48,500', style: TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Realized: ₹30,500', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}`,
+  },
+  {
+    path: 'lib/features/exams/presentation/exam_results_screen.dart',
+    name: 'exam_results_screen.dart',
+    category: 'Exams & Grading',
+    content: `import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/features/exams/domain/grading_calculator.dart';
+
+class ExamResultsScreen extends ConsumerWidget {
+  const ExamResultsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Cumulative Report Card (CBSE CCE)'),
+        backgroundColor: Colors.indigo.shade900,
+        foregroundColor: Colors.white,
+      ),
+      body: const Center(
+        child: Text('Official Scorecard: 9.4 CGPA • Rank 1'),
+      ),
+    );
+  }
+}`,
+  },
+  {
+    path: 'lib/features/timetable/presentation/timetable_screen.dart',
+    name: 'timetable_screen.dart',
+    category: 'Timetable Matrix',
+    content: `import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/features/timetable/domain/timetable_engine.dart';
+
+class TimetableScreen extends ConsumerStatefulWidget {
+  const TimetableScreen({super.key});
+
+  @override
+  ConsumerState<TimetableScreen> createState() => _TimetableScreenState();
+}
+
+class _TimetableScreenState extends ConsumerState<TimetableScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Daily Timetable Matrix'),
+        backgroundColor: Colors.indigo.shade900,
+        foregroundColor: Colors.white,
+      ),
+      body: const Center(
+        child: Text('Periods 1-8 Collision-Free Schedule Matrix'),
+      ),
+    );
+  }
+}`,
+  },
+  {
+    path: 'lib/features/communication/presentation/communication_screen.dart',
+    name: 'communication_screen.dart',
+    category: 'Communications & Diary',
+    content: `import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/features/communication/domain/diary_model.dart';
+
+class CommunicationScreen extends ConsumerStatefulWidget {
+  const CommunicationScreen({super.key});
+
+  @override
+  ConsumerState<CommunicationScreen> createState() => _CommunicationScreenState();
+}
+
+class _CommunicationScreenState extends ConsumerState<CommunicationScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('School Communications & Diary'),
+        backgroundColor: Colors.indigo.shade900,
+        foregroundColor: Colors.white,
+      ),
+      body: const Center(
+        child: Text('Emergency Circulars, Homework & Nursery Sensory Log'),
+      ),
+    );
+  }
+}`,
+  },
 ];
 
 export const CodeViewer: React.FC = () => {
@@ -618,7 +1234,7 @@ export const CodeViewer: React.FC = () => {
               <FolderOpen className="w-4 h-4 text-blue-600" />
               <span>Project Explorer</span>
             </span>
-            <span className="text-[11px] font-mono text-slate-400">12 Core & CI/CD Files</span>
+            <span className="text-[11px] font-mono text-slate-400">{FLUTTER_CODE_DATABASE.length} Core & CI/CD Files</span>
           </div>
 
           <div className="space-y-1">

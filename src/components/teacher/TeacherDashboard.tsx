@@ -18,6 +18,15 @@ import {
   MonitorUp,
   Radio,
   Play,
+  Zap,
+  Database,
+  Activity,
+  ChevronDown,
+  ChevronUp,
+  Wifi,
+  WifiOff,
+  HardDrive,
+  RotateCw,
 } from 'lucide-react';
 import { AttendanceStatus } from '../../types';
 
@@ -30,6 +39,16 @@ export const TeacherDashboard: React.FC = () => {
     saveAttendanceBatch,
     isSavingAttendance,
     attendanceSavedNotice,
+    lastSavedDelta,
+    isNetworkOnline,
+    setIsNetworkOnline,
+    toggleNetworkOnline,
+    offlineSyncQueue,
+    flushOfflineSyncQueue,
+    isSyncingQueue,
+    lastSyncNotice,
+    dashboardStats,
+    cloudFunctionLogs,
     currentUser,
     addDiaryEntry,
     conferences,
@@ -40,6 +59,7 @@ export const TeacherDashboard: React.FC = () => {
   // Selected class for teacher
   const [selectedClassId, setSelectedClassId] = useState<'CLS_11' | 'CLS_NURSERY'>('CLS_11');
   const [activeTab, setActiveTab] = useState<'attendance' | 'nursery' | 'marks' | 'diary' | 'live_class'>('live_class');
+  const [showFunctionAudit, setShowFunctionAudit] = useState(false);
 
   // Live class creation state
   const [liveTopic, setLiveTopic] = useState('Ray Optics & Optical Instruments');
@@ -126,13 +146,24 @@ export const TeacherDashboard: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold mb-2 border border-blue-400/30">
-              <span>Teacher Academic Console</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>
+                {currentUser.role === 'teacher'
+                  ? 'Teacher Dashboard • Senior Subject Faculty'
+                  : 'Class Teacher Console • Class In-Charge & Attendance'}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Ms. Priya Sharma's Faculty Desk
+              {currentUser.fullName}
+              <span className="text-blue-300 font-normal text-lg sm:text-xl ml-2">
+                ({currentUser.role === 'teacher' ? 'Teacher Dashboard' : 'Class Teacher'})
+              </span>
             </h1>
             <p className="text-slate-300 text-sm mt-1">
-              Class Teacher: Class 11-A (Science PCM) & Co-Lead: Nursery Pre-Primary Foundation.
+              {currentUser.designation ||
+                (currentUser.role === 'teacher'
+                  ? 'Subject Faculty: Physics & Mathematics • Live Virtual Classes, Exam Grading & Assignments'
+                  : 'Class Teacher: Class 11-A (Science PCM) & Nursery Pre-Primary Foundation')}
             </p>
           </div>
 
@@ -396,6 +427,145 @@ export const TeacherDashboard: React.FC = () => {
       {/* TAB 1: Quick Roll-Call Attendance */}
       {activeTab === 'attendance' && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          {/* Cloud Function Architecture Notice Banner */}
+          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-blue-500/10 to-indigo-500/10 border border-amber-300/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="flex items-start space-x-3">
+              <div className="p-2 rounded-lg bg-amber-500 text-white shrink-0 mt-0.5 shadow-sm shadow-amber-500/30">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900 flex items-center space-x-2">
+                  <span>Firebase Cloud Function Aggregator Active</span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-mono font-semibold">
+                    onDocumentWritten
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
+                  Submitting attendance writes to <code className="font-mono text-blue-700 bg-blue-50 px-1 py-0.2 rounded">attendance/{"{date_classId_sectionId}"}</code>. A Cloud Function automatically and silently computes the delta to increment a single integer <code className="font-mono text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded">presentCount</code> in document <code className="font-mono text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded">dashboard_stats/today</code>.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 shrink-0 self-end md:self-center">
+              <div className="text-right bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-200">
+                <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">dashboard_stats/today</div>
+                <div className="text-xs font-black text-indigo-700 flex items-center justify-end space-x-1">
+                  <span>presentCount:</span>
+                  <span className="font-mono text-sm text-slate-900">{dashboardStats.presentCount}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Offline Persistence Cache & Wi-Fi Zone Simulator Banner */}
+          <div
+            className={`p-4 rounded-xl border transition-all ${
+              isNetworkOnline
+                ? 'bg-emerald-500/10 border-emerald-300/60'
+                : 'bg-amber-500/15 border-amber-300/70 shadow-md ring-2 ring-amber-400/30'
+            }`}
+          >
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-start space-x-3">
+                <div
+                  className={`p-2 rounded-lg shrink-0 mt-0.5 shadow-sm ${
+                    isNetworkOnline
+                      ? 'bg-emerald-600 text-white shadow-emerald-500/30'
+                      : 'bg-amber-600 text-white shadow-amber-500/30 animate-pulse'
+                  }`}
+                >
+                  {isNetworkOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 flex items-center space-x-2">
+                    <span>Firestore Offline Persistence Cache</span>
+                    <span
+                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        isNetworkOnline
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-200 text-amber-900 animate-pulse'
+                      }`}
+                    >
+                      {isNetworkOnline ? 'Campus Wi-Fi Zone: ONLINE' : 'OFFLINE MODE (No Signal / Field Trip)'}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 font-mono hidden sm:inline">
+                      persistenceEnabled: true
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                    <strong>Offline Roll-Call Support:</strong> Teacher can submit attendance offline without network. The app queues writes in Firestore's local persistence cache (or Hive box). The exact second they walk back into a Wi-Fi zone, queued writes replay and sync to Firebase, silently triggering the Cloud Function to increment <code className="font-mono text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded">dashboard_stats/today.presentCount</code>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 shrink-0 self-start md:self-center">
+                <button
+                  type="button"
+                  onClick={toggleNetworkOnline}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5 ${
+                    isNetworkOnline
+                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                  }`}
+                >
+                  {isNetworkOnline ? (
+                    <>
+                      <WifiOff className="w-3.5 h-3.5 text-amber-700" />
+                      <span>Simulate Stepping Out of Wi-Fi</span>
+                    </>
+                  ) : (
+                    <>
+                      <Wifi className="w-3.5 h-3.5 text-white" />
+                      <span>Simulate Walking into Wi-Fi Zone</span>
+                    </>
+                  )}
+                </button>
+
+                {offlineSyncQueue.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={flushOfflineSyncQueue}
+                    disabled={isSyncingQueue}
+                    className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm flex items-center space-x-1 disabled:opacity-50"
+                  >
+                    <RotateCw className={`w-3.5 h-3.5 ${isSyncingQueue ? 'animate-spin' : ''}`} />
+                    <span>Sync Queue ({offlineSyncQueue.length})</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Offline Pending Queue Display */}
+            {offlineSyncQueue.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-amber-300/60 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center space-x-2 text-amber-950 font-medium">
+                  <HardDrive className="w-3.5 h-3.5 text-amber-600" />
+                  <span>
+                    <strong>{offlineSyncQueue.length} batch(es) pending in offline persistence cache:</strong>
+                  </span>
+                  {offlineSyncQueue.map((b) => (
+                    <span
+                      key={b.id}
+                      className="px-2 py-0.5 rounded bg-white/90 border border-amber-300 font-mono text-[11px] text-amber-900"
+                    >
+                      {b.className} ({b.presentCount} P) • Queued {b.queuedAt}
+                    </span>
+                  ))}
+                </div>
+                <span className="text-[11px] text-amber-800 italic">
+                  Will auto-sync immediately upon entering Wi-Fi zone
+                </span>
+              </div>
+            )}
+          </div>
+
+          {lastSyncNotice && (
+            <div className="p-4 rounded-xl bg-emerald-100/90 text-emerald-950 text-xs font-semibold flex items-center space-x-2.5 border border-emerald-400 shadow-md animate-bounce">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span>{lastSyncNotice}</span>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
@@ -530,29 +700,129 @@ export const TeacherDashboard: React.FC = () => {
               </span>
             </div>
 
-            <button
-              onClick={() => saveAttendanceBatch()}
-              disabled={isSavingAttendance}
-              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md shadow-blue-600/20 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
-            >
-              {isSavingAttendance ? (
-                <>
-                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Committing to Firestore...</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  <span>Save Batch Roll-Call</span>
-                </>
-              )}
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowFunctionAudit(!showFunctionAudit)}
+                className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1.5 transition-all"
+              >
+                <Activity className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Function Stream ({cloudFunctionLogs.length})</span>
+                {showFunctionAudit ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+
+              <button
+                onClick={() => saveAttendanceBatch(selectedClassId)}
+                disabled={isSavingAttendance || isSyncingQueue}
+                className={`px-5 py-2.5 rounded-xl text-white text-xs font-bold shadow-md flex items-center justify-center space-x-2 transition-all disabled:opacity-50 ${
+                  !isNetworkOnline
+                    ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/30 ring-2 ring-amber-400/50'
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
+                }`}
+              >
+                {isSavingAttendance ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>{isNetworkOnline ? 'Committing to Firestore...' : 'Writing to Offline Cache...'}</span>
+                  </>
+                ) : !isNetworkOnline ? (
+                  <>
+                    <WifiOff className="w-4 h-4" />
+                    <span>Save to Offline Cache (Queues for Wi-Fi Sync)</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Submit & Commit Batch Attendance</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {attendanceSavedNotice && (
-            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-900 text-xs font-semibold flex items-center space-x-2 border border-emerald-300 shadow-sm animate-fade-in">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>Roll-call record updated successfully for {selectedClassId === 'CLS_11' ? 'Class 11-A' : 'Nursery-A'}. Offline cache synced.</span>
+            <div
+              className={`p-4 rounded-xl text-xs font-medium space-y-1 border shadow-sm animate-fade-in ${
+                !isNetworkOnline
+                  ? 'bg-amber-50 text-amber-950 border-amber-300'
+                  : 'bg-emerald-50 text-emerald-950 border-emerald-300'
+              }`}
+            >
+              <div
+                className={`font-bold flex items-center space-x-1.5 ${
+                  !isNetworkOnline ? 'text-amber-800' : 'text-emerald-800'
+                }`}
+              >
+                {!isNetworkOnline ? (
+                  <HardDrive className="w-4 h-4 text-amber-600 shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                )}
+                <span>
+                  {!isNetworkOnline
+                    ? 'Attendance Stored in Local Firestore Persistence Cache (Offline)!'
+                    : 'Batch Attendance Committed to Firestore!'}
+                </span>
+              </div>
+              <p
+                className={`pl-5.5 leading-relaxed ${
+                  !isNetworkOnline ? 'text-amber-900/90' : 'text-emerald-900/90'
+                }`}
+              >
+                {!isNetworkOnline ? (
+                  <>
+                    Write successfully queued in local cache (<code className="font-mono bg-amber-100 px-1 py-0.5 rounded text-[11px]">Settings(persistenceEnabled: true)</code> / Hive local storage).
+                    The teacher can proceed with their day without connectivity. The app will immediately flush and sync this write to Firebase the second they walk into a Wi-Fi zone, triggering the Cloud Function to silently increment <code className="font-mono bg-amber-100 px-1 py-0.5 rounded text-[11px]">dashboard_stats/today.presentCount</code> (+{lastSavedDelta}).
+                  </>
+                ) : (
+                  <>
+                    Document <code className="font-mono bg-emerald-100/80 px-1 py-0.5 rounded text-[11px]">attendance/2026-10-10_{selectedClassId}_SEC_A</code> written.
+                    Firebase Cloud Function <code className="font-mono bg-emerald-100/80 px-1 py-0.5 rounded text-[11px]">aggregateAttendanceOnWrite</code> silently executed, applying <span className="font-bold">{lastSavedDelta >= 0 ? `+${lastSavedDelta}` : lastSavedDelta}</span> to integer <code className="font-mono bg-emerald-100/80 px-1 py-0.5 rounded text-[11px]">dashboard_stats/today.presentCount</code>. Updated school-wide present: <span className="font-bold text-emerald-800">{dashboardStats.presentCount}</span> students.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* Collapsible Cloud Function Execution Logs Drawer */}
+          {showFunctionAudit && (
+            <div className="p-4 rounded-xl bg-slate-900 text-slate-100 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <div className="flex items-center space-x-2">
+                  <Database className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-bold text-white">Firebase Cloud Functions • Real-Time Trigger Logs</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-mono">Trigger: attendance/{"{id}"}</span>
+              </div>
+
+              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                {cloudFunctionLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700/80 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  >
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-mono text-amber-300 font-bold">{log.functionName}</span>
+                        <span className="text-[10px] text-slate-400">({log.executionDurationMs}ms)</span>
+                        <span className="px-1.5 py-0.2 text-[9px] rounded bg-emerald-950 text-emerald-400 font-bold border border-emerald-800">
+                          {log.status}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-300 mt-1 font-mono">
+                        {log.details}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-mono text-emerald-400 font-bold text-xs">
+                        delta: {log.delta >= 0 ? `+${log.delta}` : log.delta}
+                      </div>
+                      <div className="text-[10px] text-slate-400">{log.timestamp}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>

@@ -8,6 +8,8 @@ import {
   DiaryEntry,
   ChatMessage,
   AttendanceStatus,
+  DashboardStats,
+  CloudFunctionTriggerLog,
 } from '../types';
 
 export const INITIAL_USERS: AppUser[] = [
@@ -23,24 +25,34 @@ export const INITIAL_USERS: AppUser[] = [
   },
   {
     uid: 'USR_TEACHER_01',
-    email: 'priya.sharma@edupulse.edu',
-    fullName: 'Ms. Priya Sharma',
+    email: 'ananya.sen@edupulse.edu',
+    fullName: 'Dr. Ananya Sen',
     role: 'teacher',
     schoolId: 'SCH_GLOBAL_001',
     avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    phoneNumber: '+91 98112 77889',
+    designation: 'Senior Faculty & Subject Teacher (Physics & Math)',
+  },
+  {
+    uid: 'USR_CLASS_TEACHER_01',
+    email: 'priya.sharma@edupulse.edu',
+    fullName: 'Ms. Priya Sharma',
+    role: 'class_teacher',
+    schoolId: 'SCH_GLOBAL_001',
+    avatarUrl: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=150&auto=format&fit=crop&q=80',
     phoneNumber: '+91 98112 23344',
-    designation: 'Class Teacher (Class 11-A & Nursery)',
+    designation: 'Class Teacher (Class 11-A & Nursery In-Charge)',
   },
   {
     uid: 'USR_PARENT_STUDENT_01',
     email: 'family.sharma@edupulse.edu',
-    fullName: 'Sharma Family (Parent & Student)',
+    fullName: 'Sharma Family (Parent)',
     role: 'parent_student',
     schoolId: 'SCH_GLOBAL_001',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
     phoneNumber: '+91 99887 76655',
     parentLinkedStudentIds: ['STU_CLASS11_01', 'STU_CLASS5_01', 'STU_NURSERY_01'],
-    designation: 'Parent & Student Unified Portal',
+    designation: 'Parent Portal (Family & Guardian)',
   },
   {
     uid: 'USR_ACCOUNTANT_01',
@@ -545,5 +557,43 @@ export const INITIAL_CONFERENCES: import('../types').LiveConferenceSession[] = [
     roomCode: 'EDU-PTM-SHARMA',
     isRecording: false,
     topicSummary: 'One-on-one virtual review of term marks, practical submissions, and personalized guidance.',
+  },
+];
+
+export const INITIAL_DASHBOARD_STATS: DashboardStats = {
+  id: 'today',
+  presentCount: 1403,
+  totalEnrolled: 1480,
+  targetDate: new Date().toISOString().split('T')[0],
+  lastUpdated: 'Just now (Cloud Function synchronized)',
+  lastAggregatedRecordId: 'ATT_2026-10-10_CLS_10_SEC_B',
+  lastDelta: 28,
+  aggregationStrategy: 'Firebase Cloud Function (aggregateAttendanceOnWrite) -> FieldValue.increment()',
+};
+
+export const INITIAL_CLOUD_FUNCTION_LOGS: CloudFunctionTriggerLog[] = [
+  {
+    id: 'CF_LOG_01',
+    timestamp: '08:15:22 AM',
+    functionName: 'aggregateAttendanceOnWrite',
+    triggerEvent: 'google.cloud.firestore.document.v1.written',
+    sourceDocPath: 'attendance/2026-10-10_CLS_09_SEC_A',
+    delta: 31,
+    newPresentCount: 1375,
+    executionDurationMs: 42,
+    status: 'SUCCESS',
+    details: 'Silently incremented presentCount by +31 in dashboard_stats/today via atomic FieldValue.increment().',
+  },
+  {
+    id: 'CF_LOG_02',
+    timestamp: '08:24:05 AM',
+    functionName: 'aggregateAttendanceOnWrite',
+    triggerEvent: 'google.cloud.firestore.document.v1.written',
+    sourceDocPath: 'attendance/2026-10-10_CLS_10_SEC_B',
+    delta: 28,
+    newPresentCount: 1403,
+    executionDurationMs: 38,
+    status: 'SUCCESS',
+    details: 'Silently incremented presentCount by +28 in dashboard_stats/today via atomic FieldValue.increment().',
   },
 ];

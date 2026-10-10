@@ -1,4 +1,12 @@
-export type UserRole = 'super_admin' | 'principal' | 'teacher' | 'parent_student' | 'student' | 'parent' | 'accountant';
+export type UserRole =
+  | 'super_admin'
+  | 'principal'
+  | 'teacher'
+  | 'class_teacher'
+  | 'parent_student'
+  | 'student'
+  | 'parent'
+  | 'accountant';
 
 export type AcademicTier = 'pre_primary' | 'primary' | 'middle' | 'secondary' | 'senior_sec';
 
@@ -187,5 +195,42 @@ export interface ConferenceParticipant {
   isHandRaised: boolean;
   isSpeaking: boolean;
   isScreenSharing?: boolean;
+}
+
+export interface DashboardStats {
+  id: string; // 'today'
+  presentCount: number;
+  totalEnrolled: number;
+  targetDate: string;
+  lastUpdated: string;
+  lastAggregatedRecordId: string;
+  lastDelta: number;
+  aggregationStrategy: string;
+}
+
+export interface CloudFunctionTriggerLog {
+  id: string;
+  timestamp: string;
+  functionName: string;
+  triggerEvent: string;
+  sourceDocPath: string;
+  delta: number;
+  newPresentCount: number;
+  executionDurationMs: number;
+  status: 'SUCCESS' | 'EXECUTING';
+  details: string;
+}
+
+export interface OfflineAttendanceBatch {
+  id: string;
+  queuedAt: string;
+  classId: string;
+  className: string;
+  sectionId: string;
+  presentCount: number;
+  totalStudents: number;
+  records: Record<string, AttendanceStatus>;
+  delta: number;
+  status: 'PENDING_OFFLINE' | 'SYNCING' | 'SYNCED';
 }
 

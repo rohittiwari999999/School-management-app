@@ -10,6 +10,9 @@ import {
   ChatMessage,
   AttendanceStatus,
   LiveConferenceSession,
+  DashboardStats,
+  CloudFunctionTriggerLog,
+  OfflineAttendanceBatch,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -20,6 +23,8 @@ import {
   INITIAL_DIARY_ENTRIES,
   INITIAL_CHAT,
   INITIAL_CONFERENCES,
+  INITIAL_DASHBOARD_STATS,
+  INITIAL_CLOUD_FUNCTION_LOGS,
 } from '../services/store';
 
 interface SMSContextType {
@@ -32,9 +37,21 @@ interface SMSContextType {
   attendanceMap: Record<string, AttendanceStatus>;
   setStudentAttendance: (studentId: string, status: AttendanceStatus) => void;
   markAllAttendance: (status: AttendanceStatus) => void;
-  saveAttendanceBatch: () => Promise<boolean>;
+  saveAttendanceBatch: (classId?: string) => Promise<boolean>;
   isSavingAttendance: boolean;
   attendanceSavedNotice: boolean;
+  lastSavedDelta: number;
+  // Offline Persistence Cache & Wi-Fi Reconnect Queue (Firestore Settings & Hive Local State)
+  isNetworkOnline: boolean;
+  setIsNetworkOnline: (online: boolean) => void;
+  toggleNetworkOnline: () => void;
+  offlineSyncQueue: OfflineAttendanceBatch[];
+  flushOfflineSyncQueue: () => Promise<void>;
+  isSyncingQueue: boolean;
+  lastSyncNotice: string | null;
+  dashboardStats: DashboardStats;
+  cloudFunctionLogs: CloudFunctionTriggerLog[];
+  triggerCloudFunctionIncrement: (delta: number, sourceClass?: string) => void;
   timetable: TimetableSlot[];
   addTimetablePeriod: (slot: TimetableSlot) => { success: boolean; message?: string };
   examResults: ExamResult[];
@@ -72,6 +89,20 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [isSavingAttendance, setIsSavingAttendance] = useState(false);
   const [attendanceSavedNotice, setAttendanceSavedNotice] = useState(false);
+  const [lastSavedDelta, setLastSavedDelta] = useState<number>(0);
+  const [lastClassPresents, setLastClassPresents] = useState<Record<string, number>>({});
+
+  // Network Connectivity State (Wi-Fi Zone simulation & Offline-First Persistence Cache)
+  const [isNetworkOnline, setIsNetworkOnlineState] = useState<boolean>(true);
+  const [offlineSyncQueue, setOfflineSyncQueue] = useState<OfflineAttendanceBatch[]>([]);
+  const [isSyncingQueue, setIsSyncingQueue] = useState<boolean>(false);
+  const [lastSyncNotice, setLastSyncNotice] = useState<string | null>(null);
+
+  // Real-time Dashboard Aggregated Stats (Synchronized silently by Cloud Functions)
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>(INITIAL_DASHBOARD_STATS);
+  const [cloudFunctionLogs, setCloudFunctionLogs] = useState<CloudFunctionTriggerLog[]>(
+    INITIAL_CLOUD_FUNCTION_LOGS
+  );
 
   // Timetable
   const [timetable, setTimetable] = useState<TimetableSlot[]>(INITIAL_TIMETABLE);
@@ -112,13 +143,169 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAttendanceMap(updated);
   };
 
-  const saveAttendanceBatch = async (): Promise<boolean> => {
+  // Replay & Flush offline persistence cache when reconnecting to Wi-Fi
+  const flushOfflineSyncQueue = async () => {
+    if (offlineSyncQueue.length === 0) return;
+    setIsSyncingQueue(true);
+    await new Promise((res) => setTimeout(res, 800)); // Simulating Firestore background queue commit
+
+    let totalDelta = 0;
+    const queueSnapshot = [...offlineSyncQueue];
+    queueSnapshot.forEach((item) => {
+      totalDelta += item.delta;
+    });
+
+    const newPresentCount = dashboardStats.presentCount + totalDelta;
+
+    setDashboardStats((prev) => ({
+      ...prev,
+      presentCount: newPresentCount,
+      lastDelta: totalDelta,
+      lastUpdated: new Date().toLocaleTimeString(),
+      lastAggregatedRecordId: queueSnapshot[0].id,
+    }));
+
+    const syncLog: CloudFunctionTriggerLog = {
+      id: `CF_LOG_${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      functionName: 'aggregateAttendanceOnWrite',
+      triggerEvent: 'google.cloud.firestore.document.v1.written',
+      sourceDocPath: `attendance/${queueSnapshot[0].id}`,
+      delta: totalDelta,
+      newPresentCount,
+      executionDurationMs: Math.floor(45 + Math.random() * 25),
+      status: 'SUCCESS',
+      details: `[Wi-Fi Zone Connected] Synced ${queueSnapshot.length} offline batch(es) to Cloud Firestore! Cloud Function silently incremented dashboard_stats/today.presentCount by ${totalDelta >= 0 ? `+${totalDelta}` : totalDelta} (Total: ${newPresentCount}).`,
+    };
+
+    setCloudFunctionLogs((prev) => [syncLog, ...prev.slice(0, 19)]);
+    setOfflineSyncQueue([]);
+    setIsSyncingQueue(false);
+    setLastSyncNotice(
+      `🟢 Reconnected to Wi-Fi Zone! Synced ${queueSnapshot.length} offline attendance write(s) to Firebase. Cloud Function silently incremented dashboard_stats/today.presentCount (+${totalDelta}).`
+    );
+    setTimeout(() => setLastSyncNotice(null), 5500);
+  };
+
+  const setIsNetworkOnline = (online: boolean) => {
+    setIsNetworkOnlineState(online);
+    if (online && offlineSyncQueue.length > 0) {
+      setTimeout(() => {
+        flushOfflineSyncQueue();
+      }, 400);
+    }
+  };
+
+  const toggleNetworkOnline = () => {
+    const nextState = !isNetworkOnline;
+    setIsNetworkOnline(nextState);
+  };
+
+  const saveAttendanceBatch = async (classId: string = 'CLS_11'): Promise<boolean> => {
     setIsSavingAttendance(true);
-    await new Promise((res) => setTimeout(res, 600)); // Simulating Firestore batch.commit()
+    await new Promise((res) => setTimeout(res, 600));
+
+    // Calculate presentCount for this batch
+    const targetStudents = students.filter((s) => s.classId === classId);
+    const currentBatchPresent = targetStudents.filter(
+      (s) => (attendanceMap[s.studentId] || 'P') === 'P'
+    ).length;
+
+    const previousBatchPresent = lastClassPresents[classId];
+    const delta =
+      previousBatchPresent === undefined
+        ? currentBatchPresent
+        : currentBatchPresent - previousBatchPresent;
+
+    const docId = `${new Date().toISOString().split('T')[0]}_${classId}_SEC_A`;
+
+    // 1. OFFLINE PERSISTENCE BRANCH:
+    if (!isNetworkOnline) {
+      const queuedBatch: OfflineAttendanceBatch = {
+        id: docId,
+        queuedAt: new Date().toLocaleTimeString(),
+        classId,
+        className: classId === 'CLS_11' ? 'Class 11-A (Sr. Secondary)' : 'Nursery-A (Pre-Primary)',
+        sectionId: 'SEC_A',
+        presentCount: currentBatchPresent,
+        totalStudents: targetStudents.length,
+        records: { ...attendanceMap },
+        delta,
+        status: 'PENDING_OFFLINE',
+      };
+
+      setOfflineSyncQueue((prev) => [queuedBatch, ...prev]);
+      setLastClassPresents((prev) => ({ ...prev, [classId]: currentBatchPresent }));
+      setLastSavedDelta(delta);
+      setIsSavingAttendance(false);
+      setAttendanceSavedNotice(true);
+      setTimeout(() => setAttendanceSavedNotice(false), 4500);
+      return true;
+    }
+
+    // 2. ONLINE DIRECT FIRESTORE WRITE BRANCH:
+    const newPresentCount = dashboardStats.presentCount + delta;
+
+    // Silently increment dashboard_stats/today document (exact Cloud Function behavior)
+    setDashboardStats((prev) => ({
+      ...prev,
+      presentCount: newPresentCount,
+      lastDelta: delta,
+      lastUpdated: new Date().toLocaleTimeString(),
+      lastAggregatedRecordId: `ATT_${docId}`,
+    }));
+
+    setLastClassPresents((prev) => ({ ...prev, [classId]: currentBatchPresent }));
+    setLastSavedDelta(delta);
+
+    // Record Cloud Function execution log in real-time
+    const newLog: CloudFunctionTriggerLog = {
+      id: `CF_LOG_${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      functionName: 'aggregateAttendanceOnWrite',
+      triggerEvent: 'google.cloud.firestore.document.v1.written',
+      sourceDocPath: `attendance/${docId}`,
+      delta,
+      newPresentCount,
+      executionDurationMs: Math.floor(35 + Math.random() * 20),
+      status: 'SUCCESS',
+      details:
+        delta === 0
+          ? `Roll-call re-submitted with 0 delta. dashboard_stats/today.presentCount held constant at ${newPresentCount}.`
+          : `Cloud Function triggered on attendance write! Silently incremented dashboard_stats/today.presentCount by ${delta > 0 ? `+${delta}` : delta} (Total: ${newPresentCount}).`,
+    };
+
+    setCloudFunctionLogs((prev) => [newLog, ...prev.slice(0, 19)]);
+
     setIsSavingAttendance(false);
     setAttendanceSavedNotice(true);
-    setTimeout(() => setAttendanceSavedNotice(false), 3000);
+    setTimeout(() => setAttendanceSavedNotice(false), 3500);
     return true;
+  };
+
+  const triggerCloudFunctionIncrement = (delta: number, sourceClass: string = 'Manual Roll Call') => {
+    const newCount = dashboardStats.presentCount + delta;
+    setDashboardStats((prev) => ({
+      ...prev,
+      presentCount: newCount,
+      lastDelta: delta,
+      lastUpdated: new Date().toLocaleTimeString(),
+      lastAggregatedRecordId: `ATT_TEST_${Date.now().toString().slice(-4)}`,
+    }));
+
+    const newLog: CloudFunctionTriggerLog = {
+      id: `CF_LOG_${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString(),
+      functionName: 'aggregateAttendanceOnWrite',
+      triggerEvent: 'google.cloud.firestore.document.v1.written',
+      sourceDocPath: `attendance/${new Date().toISOString().split('T')[0]}_${sourceClass.replace(/\s+/g, '_')}`,
+      delta,
+      newPresentCount: newCount,
+      executionDurationMs: Math.floor(32 + Math.random() * 15),
+      status: 'SUCCESS',
+      details: `Silently incremented presentCount by ${delta > 0 ? `+${delta}` : delta} in dashboard_stats/today document.`,
+    };
+    setCloudFunctionLogs((prev) => [newLog, ...prev.slice(0, 19)]);
   };
 
   const addTimetablePeriod = (candidate: TimetableSlot) => {
@@ -260,6 +447,17 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         saveAttendanceBatch,
         isSavingAttendance,
         attendanceSavedNotice,
+        lastSavedDelta,
+        isNetworkOnline,
+        setIsNetworkOnline,
+        toggleNetworkOnline,
+        offlineSyncQueue,
+        flushOfflineSyncQueue,
+        isSyncingQueue,
+        lastSyncNotice,
+        dashboardStats,
+        cloudFunctionLogs,
+        triggerCloudFunctionIncrement,
         timetable,
         addTimetablePeriod,
         examResults,

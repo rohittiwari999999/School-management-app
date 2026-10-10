@@ -38,9 +38,10 @@ enum AcademicStream {
   artsHumanities,
 }
 
-/// Multirole RBAC: Principal, Class Teacher, Unified Parent & Student, Accountant
+/// Multirole RBAC: Principal, Teacher, Class Teacher, Unified Parent & Student, Accountant
 enum UserRole {
   principal,
+  teacher,
   classTeacher,
   parentStudent,
   accountant,
@@ -51,10 +52,12 @@ extension UserRoleExtension on UserRole {
     switch (this) {
       case UserRole.principal:
         return 'Principal (Super Admin)';
+      case UserRole.teacher:
+        return 'Teacher Dashboard (Subject Faculty)';
       case UserRole.classTeacher:
         return 'Class Teacher';
       case UserRole.parentStudent:
-        return 'Parent & Student (Unified)';
+        return 'Parent Portal (Family & Guardian)';
       case UserRole.accountant:
         return 'Accountant / Cashier';
     }
@@ -64,6 +67,8 @@ extension UserRoleExtension on UserRole {
     switch (this) {
       case UserRole.principal:
         return 'principal';
+      case UserRole.teacher:
+        return 'teacher';
       case UserRole.classTeacher:
         return 'class_teacher';
       case UserRole.parentStudent:
@@ -79,6 +84,7 @@ extension UserRoleExtension on UserRole {
       case 'super_admin':
         return UserRole.principal;
       case 'teacher':
+        return UserRole.teacher;
       case 'class_teacher':
         return UserRole.classTeacher;
       case 'parent_student':
