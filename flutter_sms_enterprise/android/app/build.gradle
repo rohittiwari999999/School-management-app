@@ -2,7 +2,10 @@ plugins {
     id "com.android.application"
     id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
-    id "com.google.gms.google-services"
+}
+
+if (file("google-services.json").exists()) {
+    apply plugin: "com.google.gms.google-services"
 }
 
 def localProperties = new Properties()
@@ -32,7 +35,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace "com.edupulse.sms"
     compileSdk 34
-    ndkVersion flutter.ndkVersion
+    ndkVersion = (flutter.ndkVersion != null) ? flutter.ndkVersion : "26.1.10909125"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -56,6 +59,7 @@ android {
         multiDexEnabled true
 
         manifestPlaceholders = [
+            applicationName: "android.app.Application",
             usesCleartextTraffic: "false"
         ]
     }
@@ -63,10 +67,16 @@ android {
     signingConfigs {
         release {
             if (keystorePropertiesFile.exists()) {
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-                storeFile file(keystoreProperties['storeFile'])
-                storePassword keystoreProperties['storePassword']
+                def storeFilePath = keystoreProperties['storeFile']
+                if (storeFilePath != null) {
+                    def resolvedStoreFile = file(storeFilePath).exists() ? file(storeFilePath) : rootProject.file(storeFilePath)
+                    if (resolvedStoreFile.exists()) {
+                        keyAlias keystoreProperties['keyAlias']
+                        keyPassword keystoreProperties['keyPassword']
+                        storeFile resolvedStoreFile
+                        storePassword keystoreProperties['storePassword']
+                    }
+                }
             }
         }
     }
@@ -75,7 +85,12 @@ android {
         release {
             // Sign with release keystore if present, otherwise fallback to debug signing
             // so GitHub Actions or CI builds succeed without requiring secret setup immediately
-            signingConfig = (keystorePropertiesFile.exists()) ? signingConfigs.release : signingConfigs.debug
+            def isReleaseConfigured = signingConfigs.release.storeFile != null && signingConfigs.release.storeFile.exists()
+            if (isReleaseConfigured) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

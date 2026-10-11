@@ -60,6 +60,12 @@ jobs:
         run: |
           flutter analyze --no-fatal-infos
 
+      - name: Setup Google Services Configuration
+        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
+        working-directory: flutter_sms_enterprise/android/app
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > google-services.json
+
       - name: Setup Keystore & Signing Credentials
         if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         working-directory: flutter_sms_enterprise/android
@@ -78,19 +84,19 @@ jobs:
           EOF
 
       - name: Build Android Release APK (Split Per ABI)
-        if: github.event.inputs.build_type != 'aab_only'
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'aab_only'
         working-directory: flutter_sms_enterprise
         run: |
-          flutter build apk --release --split-per-abi
+          flutter build apk --release --split-per-abi --no-tree-shake-icons
 
       - name: Build Android App Bundle (AAB for Google Play Console)
-        if: github.event.inputs.build_type != 'apk_only'
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'apk_only'
         working-directory: flutter_sms_enterprise
         run: |
-          flutter build appbundle --release
+          flutter build appbundle --release --no-tree-shake-icons
 
       - name: Upload Release APKs
-        if: github.event.inputs.build_type != 'aab_only'
+        if: (github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'aab_only') && success()
         uses: actions/upload-artifact@v4
         with:
           name: edupulse-release-apks
@@ -98,7 +104,7 @@ jobs:
           retention-days: 14
 
       - name: Upload Release App Bundle (AAB)
-        if: github.event.inputs.build_type != 'apk_only'
+        if: (github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'apk_only') && success()
         uses: actions/upload-artifact@v4
         with:
           name: edupulse-release-aab
