@@ -112,54 +112,53 @@ export const ParentStudentDashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Unified Parent & Student Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 text-white p-6 rounded-2xl shadow-xl border border-indigo-900/40">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div className="space-y-3 sm:space-y-4">
+      {/* Unified Parent & Student Header Banner - Compact */}
+      <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 text-white p-3.5 sm:p-4 rounded-xl shadow-md border border-indigo-900/40">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-semibold mb-2 border border-purple-400/30">
-              <Users className="w-3.5 h-3.5" />
-              <span>Parent Portal (Family & Guardian)</span>
+            <div className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[11px] font-semibold mb-1 border border-purple-400/30">
+              <Users className="w-3 h-3" />
+              <span>Parent Portal</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Parent & Family Access Terminal
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight">
+              Family & Ward Access
             </h1>
-            <p className="text-slate-300 text-sm mt-1 max-w-2xl">
-              Family workspace for parents to monitor student progress. Access daily timetables, CCE report cards,
-              homework, teacher messaging, Nursery care logs, and fee invoicing under one parent account.
+            <p className="text-slate-300 text-xs">
+              Daily diary, attendance, report cards, fees, and teacher messages.
             </p>
           </div>
 
-          {/* Sibling Child Switcher */}
-          <div className="bg-slate-900/80 p-2 rounded-2xl border border-indigo-800/40">
-            <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 px-1">
-              Select Student Profile:
+          {/* Sibling Child Switcher - Compact */}
+          <div className="bg-slate-900/80 p-1.5 rounded-xl border border-indigo-800/40 shrink-0">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
+              Student:
             </div>
-            <div className="flex items-center space-x-2 overflow-x-auto pb-0.5">
+            <div className="flex items-center space-x-1.5 overflow-x-auto">
               {familyStudents.map((child) => {
                 const isSelected = activeChild.studentId === child.studentId;
                 let tierTag = 'Nursery';
                 if (child.tier === 'primary') tierTag = 'Class 5';
-                if (child.tier === 'senior_sec') tierTag = 'Class 11 PCM';
+                if (child.tier === 'senior_sec') tierTag = 'Class 11';
 
                 return (
                   <button
                     key={child.studentId}
                     onClick={() => setActiveChildId(child.studentId)}
-                    className={`flex items-center space-x-2.5 px-3 py-2 rounded-xl border text-left transition-all shrink-0 ${
+                    className={`flex items-center space-x-1.5 px-2 py-1 rounded-lg border text-left transition-all shrink-0 cursor-pointer ${
                       isSelected
-                        ? 'bg-purple-600 border-purple-400 text-white shadow-md ring-2 ring-purple-300/40 font-semibold'
+                        ? 'bg-purple-600 border-purple-400 text-white shadow-sm font-semibold'
                         : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white'
                     }`}
                   >
                     <img
                       src={child.avatarUrl}
                       alt={child.fullName}
-                      className="w-9 h-9 rounded-full object-cover border border-white/40"
+                      className="w-6 h-6 rounded-full object-cover border border-white/40"
                     />
                     <div>
-                      <div className="text-xs font-bold leading-tight">{child.fullName}</div>
-                      <div className="text-[10px] opacity-80">{tierTag}</div>
+                      <div className="text-xs font-bold leading-tight">{child.fullName.split(' ')[0]}</div>
+                      <div className="text-[9px] opacity-75">{tierTag}</div>
                     </div>
                   </button>
                 );
@@ -168,95 +167,95 @@ export const ParentStudentDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Unified Tab Navigation Bar */}
-        <div className="flex flex-wrap gap-1.5 mt-6 pt-4 border-t border-indigo-900/50">
+        {/* Unified Tab Navigation Bar - Compact */}
+        <div className="flex flex-wrap gap-1 mt-3 pt-2.5 border-t border-indigo-900/50">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
               activeTab === 'overview'
-                ? 'bg-white text-indigo-950 shadow-md'
+                ? 'bg-white text-indigo-950 shadow-sm'
                 : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Overview & Diary</span>
+            <span>Overview</span>
           </button>
 
           <button
             onClick={() => setActiveTab('live_class')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
               activeTab === 'live_class'
-                ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
+                ? 'bg-rose-600 text-white shadow-sm'
                 : 'bg-rose-950/40 text-rose-300 hover:bg-rose-900/50 hover:text-white border border-rose-800/40'
             }`}
           >
             <Video className="w-3.5 h-3.5 text-rose-400" />
-            <span>Live Classes & Meetings</span>
-            <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse ml-0.5" />
+            <span>Live Class</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse ml-0.5" />
           </button>
 
           {activeChild.tier !== 'pre_primary' && (
             <button
               onClick={() => setActiveTab('timetable')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
                 activeTab === 'timetable'
-                  ? 'bg-white text-indigo-950 shadow-md'
+                  ? 'bg-white text-indigo-950 shadow-sm'
                   : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>Student Timetable</span>
+              <span>Timetable</span>
             </button>
           )}
 
           {activeChild.tier !== 'pre_primary' && (
             <button
               onClick={() => setActiveTab('report_card')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
                 activeTab === 'report_card'
-                  ? 'bg-white text-indigo-950 shadow-md'
+                  ? 'bg-white text-indigo-950 shadow-sm'
                   : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
               }`}
             >
               <Award className="w-3.5 h-3.5" />
-              <span>Report Card & Marks</span>
+              <span>Report Card</span>
             </button>
           )}
 
           <button
             onClick={() => setActiveTab('fees')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
               activeTab === 'fees'
-                ? 'bg-white text-indigo-950 shadow-md'
+                ? 'bg-white text-indigo-950 shadow-sm'
                 : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
             }`}
           >
             <CreditCard className="w-3.5 h-3.5" />
-            <span>Fees & Invoices {pendingInvoice && '(1 Dues)'}</span>
+            <span>Fees {pendingInvoice && '(1)'}</span>
           </button>
 
           <button
             onClick={() => setActiveTab('chat')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
               activeTab === 'chat'
-                ? 'bg-white text-indigo-950 shadow-md'
+                ? 'bg-white text-indigo-950 shadow-sm'
                 : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Class Teacher Chat</span>
+            <span>Chat</span>
           </button>
 
           <button
             onClick={() => setActiveTab('leave')}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
               activeTab === 'leave'
-                ? 'bg-white text-indigo-950 shadow-md'
+                ? 'bg-white text-indigo-950 shadow-sm'
                 : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>Apply Leave</span>
+            <span>Leave</span>
           </button>
         </div>
       </div>

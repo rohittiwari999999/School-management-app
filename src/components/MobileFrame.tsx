@@ -11,24 +11,24 @@ export const MobileFrame: React.FC = () => {
   const { currentUser, deviceType } = useSMS();
 
   // Pick device frame dimensions
-  let frameWidth = 'w-[390px]';
-  let frameHeight = 'min-h-[820px] max-h-[880px]';
+  let frameWidth = 'w-full max-w-[390px]';
+  let frameHeight = 'min-h-[750px] max-h-[880px]';
   let deviceName = 'iPhone 16 Pro';
-  let roundedCorners = 'rounded-[50px]';
-  let borderThickness = 'border-[12px] border-slate-900';
+  let roundedCorners = 'rounded-[36px] sm:rounded-[50px]';
+  let borderThickness = 'border-[8px] sm:border-[12px] border-slate-900';
 
   if (deviceType === 'pixel') {
-    frameWidth = 'w-[400px]';
-    frameHeight = 'min-h-[840px] max-h-[890px]';
+    frameWidth = 'w-full max-w-[400px]';
+    frameHeight = 'min-h-[750px] max-h-[890px]';
     deviceName = 'Google Pixel 9';
-    roundedCorners = 'rounded-[46px]';
-    borderThickness = 'border-[10px] border-slate-800';
+    roundedCorners = 'rounded-[32px] sm:rounded-[46px]';
+    borderThickness = 'border-[8px] sm:border-[10px] border-slate-800';
   } else if (deviceType === 'ipad') {
-    frameWidth = 'w-[640px]';
-    frameHeight = 'min-h-[900px] max-h-[960px]';
+    frameWidth = 'w-full max-w-[640px]';
+    frameHeight = 'min-h-[800px] max-h-[960px]';
     deviceName = 'iPad Mini';
-    roundedCorners = 'rounded-[38px]';
-    borderThickness = 'border-[14px] border-slate-900';
+    roundedCorners = 'rounded-[28px] sm:rounded-[38px]';
+    borderThickness = 'border-[10px] sm:border-[14px] border-slate-900';
   }
 
   const renderCurrentRoleScreen = () => {

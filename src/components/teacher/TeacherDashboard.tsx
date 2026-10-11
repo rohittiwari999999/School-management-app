@@ -168,66 +168,66 @@ export const TeacherDashboard: React.FC = () => {
           </div>
 
           {/* Quick Tab Switcher */}
-          <div className="flex flex-wrap gap-1.5 bg-slate-800/80 p-1.5 rounded-xl border border-slate-700">
+          <div className="flex flex-wrap gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
             <button
               onClick={() => setActiveTab('live_class')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeTab === 'live_class'
                   ? 'bg-rose-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <Video className="w-3.5 h-3.5" />
-              <span>Live Classroom</span>
-              <span className="w-2 h-2 rounded-full bg-rose-400 animate-pulse ml-0.5" />
+              <span>Live Class</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse ml-0.5" />
             </button>
 
             <button
               onClick={() => setActiveTab('attendance')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeTab === 'attendance'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <CalendarCheck className="w-3.5 h-3.5" />
-              <span>Roll-Call Attendance</span>
+              <span>Attendance</span>
             </button>
 
             <button
               onClick={() => setActiveTab('nursery')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeTab === 'nursery'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <Baby className="w-3.5 h-3.5" />
-              <span>Pre-Primary Log</span>
+              <span>Nursery</span>
             </button>
 
             <button
               onClick={() => setActiveTab('marks')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeTab === 'marks'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <Calculator className="w-3.5 h-3.5" />
-              <span>Marks & GPA Engine</span>
+              <span>Grading</span>
             </button>
 
             <button
               onClick={() => setActiveTab('diary')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
                 activeTab === 'diary'
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <FileText className="w-3.5 h-3.5" />
-              <span>Assignment Dispatch</span>
+              <span>Homework</span>
             </button>
           </div>
         </div>
@@ -426,137 +426,52 @@ export const TeacherDashboard: React.FC = () => {
 
       {/* TAB 1: Quick Roll-Call Attendance */}
       {activeTab === 'attendance' && (
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-          {/* Cloud Function Architecture Notice Banner */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-blue-500/10 to-indigo-500/10 border border-amber-300/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div className="flex items-start space-x-3">
-              <div className="p-2 rounded-lg bg-amber-500 text-white shrink-0 mt-0.5 shadow-sm shadow-amber-500/30">
-                <Zap className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-slate-900 flex items-center space-x-2">
-                  <span>Firebase Cloud Function Aggregator Active</span>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-800 font-mono font-semibold">
-                    onDocumentWritten
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                  Submitting attendance writes to <code className="font-mono text-blue-700 bg-blue-50 px-1 py-0.2 rounded">attendance/{"{date_classId_sectionId}"}</code>. A Cloud Function automatically and silently computes the delta to increment a single integer <code className="font-mono text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded">presentCount</code> in document <code className="font-mono text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded">dashboard_stats/today</code>.
-                </p>
-              </div>
+        <div className="bg-white p-3.5 sm:p-5 rounded-xl border border-slate-200 shadow-sm space-y-3.5">
+          {/* Compact Cloud Function & Network Status Bar */}
+          <div className="p-2.5 sm:p-3 rounded-lg bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center space-x-2 text-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-bold text-slate-800">Cloud Sync:</span>
+              <span className="text-slate-600 font-mono text-[11px]">
+                presentCount: <strong className="text-indigo-700">{dashboardStats.presentCount}</strong> / 1,480
+              </span>
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0 self-end md:self-center">
-              <div className="text-right bg-white/80 backdrop-blur px-3 py-1.5 rounded-lg border border-slate-200">
-                <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">dashboard_stats/today</div>
-                <div className="text-xs font-black text-indigo-700 flex items-center justify-end space-x-1">
-                  <span>presentCount:</span>
-                  <span className="font-mono text-sm text-slate-900">{dashboardStats.presentCount}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+            <div className="flex items-center space-x-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={toggleNetworkOnline}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition flex items-center space-x-1 ${
+                  isNetworkOnline
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                }`}
+              >
+                {isNetworkOnline ? (
+                  <>
+                    <Wifi className="w-3 h-3 text-emerald-600" />
+                    <span>Online</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="w-3 h-3 text-amber-600" />
+                    <span>Offline ({offlineSyncQueue.length})</span>
+                  </>
+                )}
+              </button>
 
-          {/* Offline Persistence Cache & Wi-Fi Zone Simulator Banner */}
-          <div
-            className={`p-4 rounded-xl border transition-all ${
-              isNetworkOnline
-                ? 'bg-emerald-500/10 border-emerald-300/60'
-                : 'bg-amber-500/15 border-amber-300/70 shadow-md ring-2 ring-amber-400/30'
-            }`}
-          >
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-              <div className="flex items-start space-x-3">
-                <div
-                  className={`p-2 rounded-lg shrink-0 mt-0.5 shadow-sm ${
-                    isNetworkOnline
-                      ? 'bg-emerald-600 text-white shadow-emerald-500/30'
-                      : 'bg-amber-600 text-white shadow-amber-500/30 animate-pulse'
-                  }`}
-                >
-                  {isNetworkOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-slate-900 flex items-center space-x-2">
-                    <span>Firestore Offline Persistence Cache</span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                        isNetworkOnline
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-amber-200 text-amber-900 animate-pulse'
-                      }`}
-                    >
-                      {isNetworkOnline ? 'Campus Wi-Fi Zone: ONLINE' : 'OFFLINE MODE (No Signal / Field Trip)'}
-                    </span>
-                    <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 text-slate-700 font-mono hidden sm:inline">
-                      persistenceEnabled: true
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                    <strong>Offline Roll-Call Support:</strong> Teacher can submit attendance offline without network. The app queues writes in Firestore's local persistence cache (or Hive box). The exact second they walk back into a Wi-Fi zone, queued writes replay and sync to Firebase, silently triggering the Cloud Function to increment <code className="font-mono text-indigo-700 bg-indigo-50 px-1 py-0.2 rounded">dashboard_stats/today.presentCount</code>.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2 shrink-0 self-start md:self-center">
+              {offlineSyncQueue.length > 0 && (
                 <button
                   type="button"
-                  onClick={toggleNetworkOnline}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5 ${
-                    isNetworkOnline
-                      ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-                  }`}
+                  onClick={flushOfflineSyncQueue}
+                  disabled={isSyncingQueue}
+                  className="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-xs font-bold transition flex items-center space-x-1 disabled:opacity-50"
                 >
-                  {isNetworkOnline ? (
-                    <>
-                      <WifiOff className="w-3.5 h-3.5 text-amber-700" />
-                      <span>Simulate Stepping Out of Wi-Fi</span>
-                    </>
-                  ) : (
-                    <>
-                      <Wifi className="w-3.5 h-3.5 text-white" />
-                      <span>Simulate Walking into Wi-Fi Zone</span>
-                    </>
-                  )}
+                  <RotateCw className={`w-3 h-3 ${isSyncingQueue ? 'animate-spin' : ''}`} />
+                  <span>Sync ({offlineSyncQueue.length})</span>
                 </button>
-
-                {offlineSyncQueue.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={flushOfflineSyncQueue}
-                    disabled={isSyncingQueue}
-                    className="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-sm flex items-center space-x-1 disabled:opacity-50"
-                  >
-                    <RotateCw className={`w-3.5 h-3.5 ${isSyncingQueue ? 'animate-spin' : ''}`} />
-                    <span>Sync Queue ({offlineSyncQueue.length})</span>
-                  </button>
-                )}
-              </div>
+              )}
             </div>
-
-            {/* Offline Pending Queue Display */}
-            {offlineSyncQueue.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-amber-300/60 flex flex-wrap items-center justify-between gap-2 text-xs">
-                <div className="flex items-center space-x-2 text-amber-950 font-medium">
-                  <HardDrive className="w-3.5 h-3.5 text-amber-600" />
-                  <span>
-                    <strong>{offlineSyncQueue.length} batch(es) pending in offline persistence cache:</strong>
-                  </span>
-                  {offlineSyncQueue.map((b) => (
-                    <span
-                      key={b.id}
-                      className="px-2 py-0.5 rounded bg-white/90 border border-amber-300 font-mono text-[11px] text-amber-900"
-                    >
-                      {b.className} ({b.presentCount} P) • Queued {b.queuedAt}
-                    </span>
-                  ))}
-                </div>
-                <span className="text-[11px] text-amber-800 italic">
-                  Will auto-sync immediately upon entering Wi-Fi zone
-                </span>
-              </div>
-            )}
           </div>
 
           {lastSyncNotice && (
@@ -590,30 +505,30 @@ export const TeacherDashboard: React.FC = () => {
 
               <button
                 onClick={() => markAllAttendance('P')}
-                className="px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold border border-emerald-200 transition-all"
+                className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold border border-emerald-200 transition-all cursor-pointer"
               >
-                Mark All Present
+                All Present
               </button>
             </div>
           </div>
 
           {/* Real-time Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="text-[11px] font-bold text-slate-500 uppercase">Total Enrolled</div>
-              <div className="text-xl font-black text-slate-900 mt-1">{filteredStudents.length} Students</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+            <div className="p-2.5 sm:p-3 rounded-lg bg-slate-50 border border-slate-200">
+              <div className="text-[10px] font-bold text-slate-500 uppercase">Enrolled</div>
+              <div className="text-lg font-black text-slate-900 mt-0.5">{filteredStudents.length}</div>
             </div>
-            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
-              <div className="text-[11px] font-bold text-emerald-700 uppercase">Present (P)</div>
-              <div className="text-xl font-black text-emerald-900 mt-1">{presentCount}</div>
+            <div className="p-2.5 sm:p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
+              <div className="text-[10px] font-bold text-emerald-700 uppercase">Present</div>
+              <div className="text-lg font-black text-emerald-900 mt-0.5">{presentCount}</div>
             </div>
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800">
-              <div className="text-[11px] font-bold text-rose-700 uppercase">Absent (A)</div>
-              <div className="text-xl font-black text-rose-900 mt-1">{absentCount}</div>
+            <div className="p-2.5 sm:p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">
+              <div className="text-[10px] font-bold text-rose-700 uppercase">Absent</div>
+              <div className="text-lg font-black text-rose-900 mt-0.5">{absentCount}</div>
             </div>
-            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
-              <div className="text-[11px] font-bold text-amber-700 uppercase">On Leave (L)</div>
-              <div className="text-xl font-black text-amber-900 mt-1">{leaveCount}</div>
+            <div className="p-2.5 sm:p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
+              <div className="text-[10px] font-bold text-amber-700 uppercase">Leave</div>
+              <div className="text-lg font-black text-amber-900 mt-0.5">{leaveCount}</div>
             </div>
           </div>
 
@@ -692,48 +607,46 @@ export const TeacherDashboard: React.FC = () => {
           </div>
 
           {/* Batch Save Action */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2">
             <div className="text-xs text-slate-500 flex items-center space-x-1">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>
-                Atomic batch commit with <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">writeBatch()</code> to Firestore
-              </span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Direct Firestore Sync</span>
             </div>
 
             <div className="flex items-center space-x-2">
               <button
                 type="button"
                 onClick={() => setShowFunctionAudit(!showFunctionAudit)}
-                className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1.5 transition-all"
+                className="px-2.5 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1 transition-all cursor-pointer"
               >
                 <Activity className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Function Stream ({cloudFunctionLogs.length})</span>
-                {showFunctionAudit ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                <span>Logs ({cloudFunctionLogs.length})</span>
+                {showFunctionAudit ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
               </button>
 
               <button
                 onClick={() => saveAttendanceBatch(selectedClassId)}
                 disabled={isSavingAttendance || isSyncingQueue}
-                className={`px-5 py-2.5 rounded-xl text-white text-xs font-bold shadow-md flex items-center justify-center space-x-2 transition-all disabled:opacity-50 ${
+                className={`px-4 py-2 rounded-lg text-white text-xs font-bold shadow-sm flex items-center justify-center space-x-1.5 transition-all cursor-pointer disabled:opacity-50 ${
                   !isNetworkOnline
-                    ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/30 ring-2 ring-amber-400/50'
-                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20'
+                    ? 'bg-amber-600 hover:bg-amber-700'
+                    : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
                 {isSavingAttendance ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>{isNetworkOnline ? 'Committing to Firestore...' : 'Writing to Offline Cache...'}</span>
+                    <span>Saving...</span>
                   </>
                 ) : !isNetworkOnline ? (
                   <>
-                    <WifiOff className="w-4 h-4" />
-                    <span>Save to Offline Cache (Queues for Wi-Fi Sync)</span>
+                    <WifiOff className="w-3.5 h-3.5" />
+                    <span>Save Offline</span>
                   </>
                 ) : (
                   <>
-                    <Save className="w-4 h-4" />
-                    <span>Submit & Commit Batch Attendance</span>
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save Attendance</span>
                   </>
                 )}
               </button>
