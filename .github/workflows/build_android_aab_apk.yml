@@ -61,7 +61,7 @@ jobs:
           flutter analyze --no-fatal-infos
 
       - name: Setup Keystore & Signing Credentials
-        if: env.KEYSTORE_BASE64 != ''
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         working-directory: flutter_sms_enterprise/android
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
