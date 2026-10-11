@@ -149,10 +149,10 @@ export const AdminDashboard: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold mb-2 border border-blue-400/30">
-              <span>Super Admin / Principal Console</span>
+              <span>Principal Console • Head of School</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Dr. Alok Verma's Executive Dashboard
+              Dr. Alok Verma's Principal Dashboard
             </h1>
             <p className="text-slate-300 text-sm mt-1 max-w-2xl">
               Real-time oversight across Nursery to 12th Standard: Faculty allocation, fee collection,

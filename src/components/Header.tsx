@@ -192,8 +192,11 @@ export const Header: React.FC = () => {
                 let roleBadge = '';
                 let badgeColor = '';
                 switch (u.role) {
-                  case 'principal':
                   case 'super_admin':
+                    roleBadge = 'Super Admin';
+                    badgeColor = 'from-rose-600 to-red-700';
+                    break;
+                  case 'principal':
                     roleBadge = 'Principal';
                     badgeColor = 'from-amber-500 to-orange-600';
                     break;

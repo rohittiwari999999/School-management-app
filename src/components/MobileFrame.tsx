@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSMS } from '../context/SMSContext';
 import { Wifi, Battery, Signal, ArrowLeft } from 'lucide-react';
+import { SuperAdminDashboard } from './super_admin/SuperAdminDashboard';
 import { AdminDashboard } from './admin/AdminDashboard';
 import { TeacherDashboard } from './teacher/TeacherDashboard';
 import { ParentStudentDashboard } from './parent_student/ParentStudentDashboard';
@@ -32,8 +33,9 @@ export const MobileFrame: React.FC = () => {
 
   const renderCurrentRoleScreen = () => {
     switch (currentUser.role) {
-      case 'principal':
       case 'super_admin':
+        return <SuperAdminDashboard />;
+      case 'principal':
         return <AdminDashboard />;
       case 'teacher':
       case 'class_teacher':

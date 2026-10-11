@@ -234,3 +234,21 @@ export interface OfflineAttendanceBatch {
   status: 'PENDING_OFFLINE' | 'SYNCING' | 'SYNCED';
 }
 
+export type StaffRole = 'principal' | 'teacher' | 'class_teacher' | 'accountant';
+
+export interface StaffCredential {
+  id: string;
+  fullName: string;
+  role: StaffRole;
+  email: string;
+  tempPassword: string;
+  phoneNumber: string;
+  employeeId: string;
+  departmentOrClass: string;
+  qualification?: string;
+  dateOfJoining?: string;
+  acceptedBySuperAdmin: boolean;
+  acceptedAt: string;
+  status: 'active' | 'pending' | 'suspended';
+}
+

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:edupulse_sms/core/constants/app_constants.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 import 'package:edupulse_sms/features/auth/presentation/login_screen.dart';
+import 'package:edupulse_sms/features/super_admin/presentation/super_admin_dashboard_screen.dart';
 import 'package:edupulse_sms/features/teacher/presentation/teacher_dashboard_screen.dart';
 import 'package:edupulse_sms/features/principal/presentation/principal_dashboard_screen.dart';
 import 'package:edupulse_sms/features/parent_student/presentation/family_dashboard_screen.dart';
@@ -33,6 +34,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // If logged in and still at login screen, route to respective role home
       if (isLoggingIn) {
         switch (user.role) {
+          case UserRole.superAdmin:
+            return '/super_admin/dashboard';
           case UserRole.principal:
             return '/principal/dashboard';
           case UserRole.teacher:
@@ -47,6 +50,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // Security RBAC Gate check on matched route paths
       final path = state.matchedLocation;
+      if (path.startsWith('/super_admin') && user.role != UserRole.superAdmin) {
+        return _getDefaultRouteForRole(user.role);
+      }
       if (path.startsWith('/principal') && user.role != UserRole.principal) {
         return _getDefaultRouteForRole(user.role);
       }
@@ -66,6 +72,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/super_admin/dashboard',
+        builder: (context, state) => const SuperAdminDashboardScreen(),
       ),
       GoRoute(
         path: '/principal/dashboard',
@@ -154,6 +164,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
 String _getDefaultRouteForRole(UserRole role) {
   switch (role) {
+    case UserRole.superAdmin:
+      return '/super_admin/dashboard';
     case UserRole.principal:
       return '/principal/dashboard';
     case UserRole.teacher:

@@ -97,6 +97,15 @@ class AuthController extends StateNotifier<AuthState> {
   void loginAsDemoRole(UserRole role) {
     AppUser demoUser;
     switch (role) {
+      case UserRole.superAdmin:
+        demoUser = const AppUser(
+          uid: 'demo_super_admin_001',
+          email: 'superadmin@edupulse.org',
+          fullName: 'Shri Vikramaditya Roy (Super Admin)',
+          role: UserRole.superAdmin,
+          schoolId: 'SCH_GLOBAL_001',
+        );
+        break;
       case UserRole.principal:
         demoUser = const AppUser(
           uid: 'demo_principal_001',

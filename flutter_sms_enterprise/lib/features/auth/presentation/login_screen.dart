@@ -163,7 +163,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           runSpacing: 8,
                           children: [
                             _buildRoleChip(
-                              label: 'Principal (Admin)',
+                              label: 'Super Admin',
+                              icon: Icons.shield_rounded,
+                              role: UserRole.superAdmin,
+                              color: const Color(0xFF881337),
+                            ),
+                            _buildRoleChip(
+                              label: 'Principal',
                               icon: Icons.admin_panel_settings_rounded,
                               role: UserRole.principal,
                               color: const Color(0xFF1E3A8A),
@@ -173,6 +179,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               icon: Icons.co_present_rounded,
                               role: UserRole.teacher,
                               color: const Color(0xFF0D9488),
+                            ),
+                            _buildRoleChip(
+                              label: 'Class Teacher',
+                              icon: Icons.assignment_ind_rounded,
+                              role: UserRole.classTeacher,
+                              color: const Color(0xFF0369A1),
                             ),
                             _buildRoleChip(
                               label: 'Parent & Student',

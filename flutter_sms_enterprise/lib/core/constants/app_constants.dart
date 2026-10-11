@@ -38,8 +38,9 @@ enum AcademicStream {
   artsHumanities,
 }
 
-/// Multirole RBAC: Principal, Teacher, Class Teacher, Unified Parent & Student, Accountant
+/// Multirole RBAC: Super Admin, Principal, Teacher, Class Teacher, Unified Parent & Student, Accountant
 enum UserRole {
+  superAdmin,
   principal,
   teacher,
   classTeacher,
@@ -50,8 +51,10 @@ enum UserRole {
 extension UserRoleExtension on UserRole {
   String get displayName {
     switch (this) {
+      case UserRole.superAdmin:
+        return 'Super Admin (Institutional Governance)';
       case UserRole.principal:
-        return 'Principal (Super Admin)';
+        return 'Principal (Head of School)';
       case UserRole.teacher:
         return 'Teacher Dashboard (Subject Faculty)';
       case UserRole.classTeacher:
@@ -65,6 +68,8 @@ extension UserRoleExtension on UserRole {
 
   String get idName {
     switch (this) {
+      case UserRole.superAdmin:
+        return 'super_admin';
       case UserRole.principal:
         return 'principal';
       case UserRole.teacher:
@@ -80,8 +85,9 @@ extension UserRoleExtension on UserRole {
 
   static UserRole fromString(String role) {
     switch (role.toLowerCase()) {
-      case 'principal':
       case 'super_admin':
+        return UserRole.superAdmin;
+      case 'principal':
         return UserRole.principal;
       case 'teacher':
         return UserRole.teacher;

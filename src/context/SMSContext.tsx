@@ -13,6 +13,7 @@ import {
   DashboardStats,
   CloudFunctionTriggerLog,
   OfflineAttendanceBatch,
+  StaffCredential,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -25,12 +26,17 @@ import {
   INITIAL_CONFERENCES,
   INITIAL_DASHBOARD_STATS,
   INITIAL_CLOUD_FUNCTION_LOGS,
+  INITIAL_STAFF_CREDENTIALS,
 } from '../services/store';
 
 interface SMSContextType {
   currentUser: AppUser;
   setCurrentUser: (user: AppUser) => void;
   users: AppUser[];
+  staffCredentials: StaffCredential[];
+  acceptStaffCredential: (credential: Omit<StaffCredential, 'id' | 'acceptedAt' | 'acceptedBySuperAdmin'>) => void;
+  updateStaffCredentialStatus: (id: string, status: 'active' | 'pending' | 'suspended') => void;
+  deleteStaffCredential: (id: string) => void;
   students: StudentProfile[];
   activeChild: StudentProfile;
   setActiveChildId: (id: string) => void;
@@ -76,8 +82,9 @@ interface SMSContextType {
 const SMSContext = createContext<SMSContextType | undefined>(undefined);
 
 export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [users] = useState<AppUser[]>(INITIAL_USERS);
-  const [currentUser, setCurrentUser] = useState<AppUser>(INITIAL_USERS[0]); // default Principal
+  const [users, setUsers] = useState<AppUser[]>(INITIAL_USERS);
+  const [currentUser, setCurrentUser] = useState<AppUser>(INITIAL_USERS[0]); // default Super Admin
+  const [staffCredentials, setStaffCredentials] = useState<StaffCredential[]>(INITIAL_STAFF_CREDENTIALS);
   const [students] = useState<StudentProfile[]>(INITIAL_STUDENTS);
   const [activeChildId, setActiveChildId] = useState<string>('STU_CLASS11_01');
 
@@ -432,12 +439,61 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const acceptStaffCredential = (data: Omit<StaffCredential, 'id' | 'acceptedAt' | 'acceptedBySuperAdmin'>) => {
+    const newId = `CRED_${data.role.toUpperCase().slice(0, 4)}_${Date.now().toString().slice(-4)}`;
+    const newCredential: StaffCredential = {
+      ...data,
+      id: newId,
+      acceptedAt: new Date().toISOString(),
+      acceptedBySuperAdmin: true,
+    };
+    setStaffCredentials((prev) => [newCredential, ...prev]);
+
+    // Automatically create or update AppUser persona in users list so they can be logged in
+    const avatarMap: Record<string, string> = {
+      principal: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      teacher: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+      class_teacher: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=150&auto=format&fit=crop&q=80',
+      accountant: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    };
+
+    const newUser: AppUser = {
+      uid: `USR_${newId}`,
+      email: data.email,
+      fullName: data.fullName,
+      role: data.role,
+      schoolId: 'SCH_GLOBAL_001',
+      avatarUrl: avatarMap[data.role] || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+      phoneNumber: data.phoneNumber,
+      designation: `${data.role === 'principal' ? 'Principal' : data.role === 'class_teacher' ? 'Class Teacher' : data.role === 'teacher' ? 'Subject Faculty' : 'Accountant'} • ${data.departmentOrClass}`,
+    };
+
+    setUsers((prev) => {
+      const filtered = prev.filter((u) => u.email.toLowerCase() !== data.email.toLowerCase());
+      return [...filtered, newUser];
+    });
+  };
+
+  const updateStaffCredentialStatus = (id: string, status: 'active' | 'pending' | 'suspended') => {
+    setStaffCredentials((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, status } : c))
+    );
+  };
+
+  const deleteStaffCredential = (id: string) => {
+    setStaffCredentials((prev) => prev.filter((c) => c.id !== id));
+  };
+
   return (
     <SMSContext.Provider
       value={{
         currentUser,
         setCurrentUser,
         users,
+        staffCredentials,
+        acceptStaffCredential,
+        updateStaffCredentialStatus,
+        deleteStaffCredential,
         students,
         activeChild,
         setActiveChildId,
