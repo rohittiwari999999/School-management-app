@@ -15,9 +15,21 @@ class AuthRepository {
 
   AuthRepository(this._firebase);
 
-  Stream<User?> get authStateChanges => _firebase.auth.authStateChanges();
+  Stream<User?> get authStateChanges {
+    try {
+      return _firebase.auth.authStateChanges();
+    } catch (e) {
+      return const Stream.empty();
+    }
+  }
 
-  User? get currentUser => _firebase.auth.currentUser;
+  User? get currentUser {
+    try {
+      return _firebase.auth.currentUser;
+    } catch (e) {
+      return null;
+    }
+  }
 
   /// Fetch full user profile with role claims from Firestore
   Future<AppUser?> getUserProfile(String uid) async {

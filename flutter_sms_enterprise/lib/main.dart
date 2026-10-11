@@ -8,10 +8,13 @@ import 'package:edupulse_sms/core/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Core Firebase Services & Offline Cache
   final container = ProviderContainer();
-  final firebaseService = container.read(firebaseServiceProvider);
-  await firebaseService.initialize();
+  try {
+    final firebaseService = container.read(firebaseServiceProvider);
+    await firebaseService.initialize();
+  } catch (e) {
+    debugPrint('Firebase initialization caught in main: $e');
+  }
 
   runApp(
     UncontrolledProviderScope(

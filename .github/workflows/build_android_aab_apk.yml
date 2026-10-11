@@ -90,30 +90,53 @@ jobs:
             echo "KEYSTORE_BASE64 secret not provided; release build will fall back cleanly to debug signing."
           fi
 
-      - name: Build Android Release APK (Split Per ABI)
+      - name: Build Android Universal Signed Release APK
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'aab_only'
         working-directory: flutter_sms_enterprise
         run: |
-          flutter build apk --release --split-per-abi --no-tree-shake-icons
+          mkdir -p dist
+          flutter build apk --release --no-tree-shake-icons
+          cp build/app/outputs/flutter-apk/app-release.apk dist/edupulse-signed-release.apk
+          echo "Universal Signed Release APK built successfully at dist/edupulse-signed-release.apk"
+
+      - name: Build Android Testing APK (Debug / Fast Install)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'aab_only'
+        working-directory: flutter_sms_enterprise
+        run: |
+          mkdir -p dist
+          flutter build apk --debug
+          cp build/app/outputs/flutter-apk/app-debug.apk dist/edupulse-testing.apk
+          echo "Testing APK built successfully at dist/edupulse-testing.apk"
 
       - name: Build Android App Bundle (AAB for Google Play Console)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'apk_only'
         working-directory: flutter_sms_enterprise
         run: |
+          mkdir -p dist
           flutter build appbundle --release --no-tree-shake-icons
+          cp build/app/outputs/bundle/release/app-release.aab dist/edupulse-playstore.aab
+          echo "Google Play Store AAB built successfully at dist/edupulse-playstore.aab"
 
-      - name: Upload Release APKs
+      - name: Upload Universal Signed Release APK
         if: (github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'aab_only') && success()
         uses: actions/upload-artifact@v4
         with:
-          name: edupulse-release-apks
-          path: flutter_sms_enterprise/build/app/outputs/flutter-apk/*.apk
+          name: edupulse-signed-release-apk
+          path: flutter_sms_enterprise/dist/edupulse-signed-release.apk
           retention-days: 14
 
-      - name: Upload Release App Bundle (AAB)
+      - name: Upload Testing APK
+        if: (github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'aab_only') && success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: edupulse-testing-apk
+          path: flutter_sms_enterprise/dist/edupulse-testing.apk
+          retention-days: 14
+
+      - name: Upload Google Play Store Bundle (AAB)
         if: (github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'apk_only') && success()
         uses: actions/upload-artifact@v4
         with:
-          name: edupulse-release-aab
-          path: flutter_sms_enterprise/build/app/outputs/bundle/release/*.aab
+          name: edupulse-playstore-aab
+          path: flutter_sms_enterprise/dist/edupulse-playstore.aab
           retention-days: 14

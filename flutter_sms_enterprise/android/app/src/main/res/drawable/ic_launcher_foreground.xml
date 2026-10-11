@@ -3,7 +3,23 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Mortarboard cap top -->
     <path
-        android:fillColor="#3B82F6"
-        android:pathData="M24,24h60v60h-60z"/>
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,28 L82,42 L54,56 L26,42 Z"/>
+    <!-- Mortarboard skull base -->
+    <path
+        android:fillColor="#E2E8F0"
+        android:pathData="M38,48 L38,62 C38,67 70,67 70,62 L70,48 L54,56 Z"/>
+    <!-- Gold Tassel -->
+    <path
+        android:fillColor="#F59E0B"
+        android:pathData="M72,42 L77,44 L75,64 C73,65 77,65 75,64 Z"/>
+    <!-- Open Book / Pages at bottom -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,68 C40,66 50,68 53,70 L53,82 C50,80 40,78 30,80 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M55,70 C58,68 68,66 78,68 L78,80 C68,78 58,80 55,82 Z"/>
 </vector>

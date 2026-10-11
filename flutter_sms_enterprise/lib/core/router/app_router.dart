@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:edupulse_sms/core/constants/app_constants.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
+import 'package:edupulse_sms/features/auth/presentation/login_screen.dart';
 import 'package:edupulse_sms/features/teacher/presentation/teacher_dashboard_screen.dart';
 import 'package:edupulse_sms/features/principal/presentation/principal_dashboard_screen.dart';
 import 'package:edupulse_sms/features/parent_student/presentation/family_dashboard_screen.dart';
@@ -64,9 +65,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('EduPulse Secure Login Screen')),
-        ),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: '/principal/dashboard',
