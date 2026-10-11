@@ -359,7 +359,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               label,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w640,
+                fontWeight: FontWeight.w600,
                 color: color,
               ),
             ),
