@@ -1,4 +1,5 @@
 import 'package:edupulse_sms/core/constants/app_constants.dart';
+export 'package:edupulse_sms/core/constants/app_constants.dart' show UserRole, UserRoleExtension;
 
 class AppUser {
   final String uid;
