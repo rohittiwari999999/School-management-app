@@ -61,13 +61,18 @@ jobs:
           flutter analyze --no-fatal-infos
 
       - name: Setup Google Services Configuration
-        if: ${{ secrets.GOOGLE_SERVICES_JSON != '' }}
         working-directory: flutter_sms_enterprise/android/app
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > google-services.json
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" > google-services.json
+            echo "Configured google-services.json from GitHub secret."
+          else
+            echo "No GOOGLE_SERVICES_JSON secret provided; using repository fallback configuration."
+          fi
 
       - name: Setup Keystore & Signing Credentials
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
         working-directory: flutter_sms_enterprise/android
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -75,13 +80,15 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > app/upload-keystore.jks
-          cat <<EOF > key.properties
-          storePassword=$KEYSTORE_PASSWORD
-          keyPassword=$KEY_PASSWORD
-          keyAlias=$KEY_ALIAS
-          storeFile=upload-keystore.jks
-          EOF
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "Decoding upload keystore..."
+            echo "$KEYSTORE_BASE64" | base64 --decode > app/upload-keystore.jks
+            printf "storePassword=%s\nkeyPassword=%s\nkeyAlias=%s\nstoreFile=upload-keystore.jks\n" \
+              "$KEYSTORE_PASSWORD" "$KEY_PASSWORD" "$KEY_ALIAS" > key.properties
+            echo "Keystore and key.properties configured successfully."
+          else
+            echo "KEYSTORE_BASE64 secret not provided; release build will fall back cleanly to debug signing."
+          fi
 
       - name: Build Android Release APK (Split Per ABI)
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.build_type != 'aab_only'
