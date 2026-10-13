@@ -166,100 +166,89 @@ export const ParentStudentDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Unified Tab Navigation Bar - Compact */}
-        <div className="flex flex-wrap gap-1 mt-3 pt-2.5 border-t border-indigo-900/50">
+      {/* Student/Parent Navigation Switcher - 2 Rows (3 Buttons Top, 3 Buttons Below) */}
+      <div className="bg-white rounded-xl border border-slate-200 p-2 shadow-xs space-y-1.5">
+        {/* Row 1: 3 Buttons on Top */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
               activeTab === 'overview'
-                ? 'bg-white text-indigo-950 shadow-sm'
-                : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Overview</span>
+            <Sparkles className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Overview</span>
           </button>
 
           <button
             onClick={() => setActiveTab('live_class')}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
               activeTab === 'live_class'
-                ? 'bg-rose-600 text-white shadow-sm'
-                : 'bg-rose-950/40 text-rose-300 hover:bg-rose-900/50 hover:text-white border border-rose-800/40'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-rose-50 hover:text-rose-700 border border-slate-200'
             }`}
           >
-            <Video className="w-3.5 h-3.5 text-rose-400" />
-            <span>Live Class</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse ml-0.5" />
+            <Video className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+            <span className="truncate">Live Class</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0 hidden xs:inline-block" />
           </button>
 
-          {activeChild.tier !== 'pre_primary' && (
-            <button
-              onClick={() => setActiveTab('timetable')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-                activeTab === 'timetable'
-                  ? 'bg-white text-indigo-950 shadow-sm'
-                  : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
-              }`}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span>Timetable</span>
-            </button>
-          )}
+          <button
+            onClick={() => setActiveTab('timetable')}
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
+              activeTab === 'timetable'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Timetable</span>
+          </button>
+        </div>
 
-          {activeChild.tier !== 'pre_primary' && (
-            <button
-              onClick={() => setActiveTab('report_card')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-                activeTab === 'report_card'
-                  ? 'bg-white text-indigo-950 shadow-sm'
-                  : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
-              }`}
-            >
-              <Award className="w-3.5 h-3.5" />
-              <span>Report Card</span>
-            </button>
-          )}
+        {/* Row 2: 3 Buttons Below */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+          <button
+            onClick={() => setActiveTab('report_card')}
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
+              activeTab === 'report_card'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Award className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Report Card</span>
+          </button>
 
           <button
             onClick={() => setActiveTab('fees')}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
               activeTab === 'fees'
-                ? 'bg-white text-indigo-950 shadow-sm'
-                : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>Fees {pendingInvoice && '(1)'}</span>
+            <CreditCard className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Fees {pendingInvoice && '(1)'}</span>
           </button>
 
           <button
-            onClick={() => setActiveTab('chat')}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-              activeTab === 'chat'
-                ? 'bg-white text-indigo-950 shadow-sm'
-                : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
+            onClick={() => setActiveTab(activeTab === 'leave' ? 'leave' : 'chat')}
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
+              activeTab === 'chat' || activeTab === 'leave'
+                ? 'bg-purple-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
             }`}
           >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>Chat</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('leave')}
-            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1 cursor-pointer ${
-              activeTab === 'leave'
-                ? 'bg-white text-indigo-950 shadow-sm'
-                : 'bg-indigo-950/40 text-slate-300 hover:bg-indigo-900/50 hover:text-white'
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Leave</span>
+            <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Chat & Leave</span>
           </button>
         </div>
       </div>
-
       {paymentSuccessNotice && (
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-semibold flex items-center justify-between shadow-md">
           <div className="flex items-center space-x-2">
@@ -831,7 +820,7 @@ export const ParentStudentDashboard: React.FC = () => {
       {/* TAB 5: CLASS TEACHER CHAT */}
       {activeTab === 'chat' && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
+          <div className="border-b border-slate-100 pb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
                 <MessageSquare className="w-5 h-5 text-indigo-600" />
@@ -841,10 +830,20 @@ export const ParentStudentDashboard: React.FC = () => {
                 Direct inquiry channel regarding academic progress and classroom feedback.
               </p>
             </div>
-            <span className="flex items-center space-x-1.5 text-xs text-emerald-600 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Teacher Online</span>
-            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab('leave')}
+                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 flex items-center space-x-1 cursor-pointer transition"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Apply for Leave</span>
+              </button>
+              <span className="flex items-center space-x-1.5 text-xs text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Teacher Online</span>
+              </span>
+            </div>
           </div>
 
           <div className="h-64 overflow-y-auto space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs">
@@ -893,14 +892,24 @@ export const ParentStudentDashboard: React.FC = () => {
       {/* TAB 6: APPLY LEAVE */}
       {activeTab === 'leave' && (
         <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-indigo-600" />
-              <span>Submit Leave Application for {activeChild.fullName}</span>
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Leaves submitted here will be acknowledged by Class Teacher Ms. Priya Sharma and recorded in daily attendance.
-            </p>
+          <div className="border-b border-slate-100 pb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-indigo-600" />
+                <span>Submit Leave Application for {activeChild.fullName}</span>
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Leaves submitted here will be acknowledged by Class Teacher Ms. Priya Sharma and recorded in daily attendance.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('chat')}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 flex items-center space-x-1 cursor-pointer transition"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Back to Teacher Chat</span>
+            </button>
           </div>
 
           <form onSubmit={handleLeaveSubmit} className="space-y-4 max-w-xl">
@@ -955,7 +964,6 @@ export const ParentStudentDashboard: React.FC = () => {
           </form>
         </div>
       )}
-
       {/* RAZORPAY / STRIPE CHECKOUT MODAL */}
       {selectedInvoiceForPayment && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">

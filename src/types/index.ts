@@ -234,7 +234,40 @@ export interface OfflineAttendanceBatch {
   status: 'PENDING_OFFLINE' | 'SYNCING' | 'SYNCED';
 }
 
-export type StaffRole = 'principal' | 'teacher' | 'class_teacher' | 'accountant';
+export type StaffRole =
+  | 'principal'
+  | 'teacher'
+  | 'class_teacher'
+  | 'accountant'
+  | 'peon'
+  | 'maid'
+  | 'security_guard'
+  | 'driver'
+  | 'lab_assistant'
+  | 'librarian'
+  | 'other';
+
+export interface StaffSalaryPayment {
+  id: string;
+  paymentDate: string; // YYYY-MM-DD
+  monthYear: string; // e.g. "October 2026"
+  staffId: string;
+  staffName: string;
+  staffRole: StaffRole;
+  staffDepartment: string;
+  employeeId: string;
+  baseSalary: number;
+  bonusOrAllowance: number;
+  deductions: number;
+  netAmountPaid: number;
+  paymentMode: 'bank_transfer' | 'cash' | 'upi' | 'cheque';
+  transactionRef: string;
+  remarks: string;
+  disbursedBy: string; // e.g. "Super Admin" or "Dr. Alok Verma (Principal)"
+  status: 'paid' | 'pending';
+  receiptVoucherNumber: string;
+  createdAt: string;
+}
 
 export interface StaffCredential {
   id: string;
@@ -250,5 +283,46 @@ export interface StaffCredential {
   acceptedBySuperAdmin: boolean;
   acceptedAt: string;
   status: 'active' | 'pending' | 'suspended';
+  avatarUrl?: string;
+}
+
+export interface StaffActivityLog {
+  id: string;
+  staffId: string;
+  staffName: string;
+  role: StaffRole;
+  action: string;
+  category: 'attendance' | 'academic' | 'finance' | 'administration' | 'communication';
+  timestamp: string;
+  timeAgo: string;
+  status: 'completed' | 'in_progress' | 'flagged';
+  details?: string;
+}
+
+export interface StaffDirective {
+  id: string;
+  title: string;
+  instructions: string;
+  targetStaffId: string; // specific staff id or 'ALL_STAFF'
+  targetStaffName: string;
+  targetRole: StaffRole | 'all';
+  priority: 'urgent' | 'high' | 'normal';
+  deadline: string;
+  issuedAt: string;
+  status: 'pending' | 'in_progress' | 'completed';
+  category: 'administrative' | 'academic' | 'compliance' | 'finance';
+}
+
+export interface StaffCommunicationMessage {
+  id: string;
+  fromUid: string;
+  fromName: string;
+  toStaffId: string; // specific staff id or 'ALL_STAFF'
+  toStaffName: string;
+  message: string;
+  timestamp: string;
+  isBroadcast: boolean;
+  priority: 'normal' | 'urgent';
+  isRead: boolean;
 }
 

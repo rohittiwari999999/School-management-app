@@ -27,7 +27,14 @@ import {
   WifiOff,
   HardDrive,
   RotateCw,
+  Compass,
+  ShieldAlert,
+  Users,
+  GraduationCap,
+  Camera,
+  Upload,
 } from 'lucide-react';
+import { PhotoUploadField } from '../common/PhotoUploadField';
 import { AttendanceStatus } from '../../types';
 
 export const TeacherDashboard: React.FC = () => {
@@ -50,15 +57,30 @@ export const TeacherDashboard: React.FC = () => {
     dashboardStats,
     cloudFunctionLogs,
     currentUser,
+    updateUserAvatar,
+    updateStudent,
     addDiaryEntry,
     conferences,
     joinConference,
     createConference,
+    staffDirectives,
+    updateDirectiveStatus,
   } = useSMS();
 
+  // Photo Update Modals State
+  const [showTeacherPhotoModal, setShowTeacherPhotoModal] = useState(false);
+  const [teacherPhotoUrl, setTeacherPhotoUrl] = useState('');
+  const [photoSavedNotice, setPhotoSavedNotice] = useState<string | null>(null);
+
+  const [showStudentPhotoModal, setShowStudentPhotoModal] = useState(false);
+  const [selectedStudentForPhotoId, setSelectedStudentForPhotoId] = useState('');
+  const [studentPhotoUrl, setStudentPhotoUrl] = useState('');
+
   // Selected class for teacher
-  const [selectedClassId, setSelectedClassId] = useState<'CLS_11' | 'CLS_NURSERY'>('CLS_11');
-  const [activeTab, setActiveTab] = useState<'attendance' | 'nursery' | 'marks' | 'diary' | 'live_class'>('live_class');
+  const [selectedClassId, setSelectedClassId] = useState<'CLS_11' | 'CLS_NURSERY' | string>('CLS_11');
+  const [activeTab, setActiveTab] = useState<'attendance' | 'live_class' | 'marks' | 'diary' | 'nursery'>(
+    'attendance'
+  );
   const [showFunctionAudit, setShowFunctionAudit] = useState(false);
 
   // Live class creation state
@@ -102,14 +124,16 @@ export const TeacherDashboard: React.FC = () => {
 
   const calculatedResult = calculateGrade(scorePercent);
 
-  // Filter students for attendance
-  const filteredStudents = students.filter(
-    (s) => s.classId === selectedClassId
+  // All students belonging to active class
+  const allClassStudents = students.filter(
+    (s) => selectedClassId === 'ALL' || s.classId === selectedClassId
   );
 
-  const presentCount = filteredStudents.filter((s) => (attendanceMap[s.studentId] || 'P') === 'P').length;
-  const absentCount = filteredStudents.filter((s) => attendanceMap[s.studentId] === 'A').length;
-  const leaveCount = filteredStudents.filter((s) => attendanceMap[s.studentId] === 'L').length;
+  // Filter students for attendance view
+  const filteredStudents = students.filter(
+    (s) => selectedClassId === 'ALL' || s.classId === selectedClassId
+  );
+
 
   const handleDiarySubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,97 +165,244 @@ export const TeacherDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Teacher Header Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-6 rounded-2xl shadow-xl border border-blue-800/40">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold mb-2 border border-blue-400/30">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>
-                {currentUser.role === 'teacher'
-                  ? 'Teacher Dashboard • Senior Subject Faculty'
-                  : 'Class Teacher Console • Class In-Charge & Attendance'}
-              </span>
+      {/* Teacher Header Banner - Simplified to Name, Short Designation, Photo & Photo Option */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white p-4 sm:p-5 rounded-2xl shadow-xl border border-blue-800/40">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-3.5 sm:space-x-4">
+            {/* Teacher Photo */}
+            <div className="relative group shrink-0">
+              <img
+                src={currentUser.avatarUrl}
+                alt={currentUser.fullName}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-blue-400 shadow-md ring-2 ring-blue-500/20"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setTeacherPhotoUrl(currentUser.avatarUrl);
+                  setShowTeacherPhotoModal(true);
+                }}
+                className="absolute -bottom-1 -right-1 p-1 sm:p-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-md border-2 border-slate-900 transition cursor-pointer"
+                title="Change Teacher Photo"
+              >
+                <Camera className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </button>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-              {currentUser.fullName}
-              <span className="text-blue-300 font-normal text-lg sm:text-xl ml-2">
-                ({currentUser.role === 'teacher' ? 'Teacher Dashboard' : 'Class Teacher'})
-              </span>
-            </h1>
-            <p className="text-slate-300 text-sm mt-1">
-              {currentUser.designation ||
-                (currentUser.role === 'teacher'
-                  ? 'Subject Faculty: Physics & Mathematics • Live Virtual Classes, Exam Grading & Assignments'
-                  : 'Class Teacher: Class 11-A (Science PCM) & Nursery Pre-Primary Foundation')}
-            </p>
+
+            {/* Teacher Name & Short Designation */}
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                {currentUser.fullName}
+              </h1>
+              <p className="text-blue-300 text-xs sm:text-sm font-medium mt-0.5">
+                {currentUser.designation?.split('(')[0]?.trim() || 'Senior Faculty'}
+              </p>
+            </div>
           </div>
 
-          {/* Quick Tab Switcher */}
-          <div className="flex flex-wrap gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
+          {/* Quick Photo Actions */}
+          <div className="flex items-center space-x-2 shrink-0">
             <button
-              onClick={() => setActiveTab('live_class')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
-                activeTab === 'live_class'
-                  ? 'bg-rose-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              type="button"
+              onClick={() => {
+                setTeacherPhotoUrl(currentUser.avatarUrl);
+                setShowTeacherPhotoModal(true);
+              }}
+              className="px-3 py-1.5 rounded-lg bg-blue-600/80 hover:bg-blue-600 text-white text-xs font-semibold border border-blue-400/40 shadow-xs flex items-center space-x-1.5 transition cursor-pointer"
             >
-              <Video className="w-3.5 h-3.5" />
-              <span>Live Class</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse ml-0.5" />
+              <Camera className="w-3.5 h-3.5" />
+              <span>Teacher Photo</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('attendance')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
-                activeTab === 'attendance'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
+              type="button"
+              onClick={() => {
+                const firstStudent = allClassStudents[0] || students[0];
+                if (firstStudent) {
+                  setSelectedStudentForPhotoId(firstStudent.studentId);
+                  setStudentPhotoUrl(firstStudent.avatarUrl);
+                }
+                setShowStudentPhotoModal(true);
+              }}
+              className="px-3 py-1.5 rounded-lg bg-indigo-600/80 hover:bg-indigo-600 text-white text-xs font-semibold border border-indigo-400/40 shadow-xs flex items-center space-x-1.5 transition cursor-pointer"
             >
-              <CalendarCheck className="w-3.5 h-3.5" />
-              <span>Attendance</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('nursery')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
-                activeTab === 'nursery'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Baby className="w-3.5 h-3.5" />
-              <span>Nursery</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('marks')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
-                activeTab === 'marks'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <Calculator className="w-3.5 h-3.5" />
-              <span>Grading</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab('diary')}
-              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1 ${
-                activeTab === 'diary'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>Homework</span>
+              <Users className="w-3.5 h-3.5" />
+              <span>Student Photos</span>
             </button>
           </div>
         </div>
+
+        {photoSavedNotice && (
+          <div className="mt-3 p-2 rounded-lg bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold flex items-center space-x-1.5 animate-fade-in">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{photoSavedNotice}</span>
+          </div>
+        )}
       </div>
+
+      {/* Teacher Console Switcher - 2 Rows (3 Buttons Top, 3 Buttons Below) */}
+      <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 p-2 sm:p-2.5 shadow-sm space-y-1.5">
+        <div className="flex items-center justify-between px-2 pt-1 pb-0.5 border-b border-slate-100">
+          <div className="flex items-center space-x-1.5 text-slate-500 text-[11px] font-bold">
+            <GraduationCap className="w-3.5 h-3.5 text-blue-600" />
+            <span>Teacher Console Switcher (शिक्षक कंसोल नेविगेशन)</span>
+          </div>
+          <span className="text-[10px] text-slate-400 font-medium">Switch Active Module</span>
+        </div>
+
+        {/* Row 1: 3 Buttons on Top */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+          <button
+            onClick={() => {
+              setActiveTab('attendance');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
+              activeTab === 'attendance'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <CalendarCheck className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Attendance</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('live_class');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
+              activeTab === 'live_class'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-rose-50 hover:text-rose-700 border border-slate-200'
+            }`}
+          >
+            <Video className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+            <span className="truncate">Live Class</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse shrink-0 hidden xs:inline-block" />
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('marks');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
+              activeTab === 'marks'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Calculator className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Grading</span>
+          </button>
+        </div>
+
+        {/* Row 2: 3 Buttons Below */}
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+          <button
+            onClick={() => {
+              setActiveTab('diary');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`py-2 px-1.5 sm:px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer text-center ${
+              activeTab === 'diary'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Homework</span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('nursery');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className={`py-2 px-1.5 sm:px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer text-center ${
+              activeTab === 'nursery'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Baby className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">Nursery Care</span>
+          </button>
+
+          <button
+            onClick={() => setShowFunctionAudit(!showFunctionAudit)}
+            className={`py-2 px-1.5 sm:px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1 cursor-pointer text-center ${
+              showFunctionAudit
+                ? 'bg-indigo-600 text-white shadow-xs'
+                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5 shrink-0 text-cyan-600" />
+            <span className="truncate">Cloud Functions</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Super Admin Directives for Faculty - Uske theek neeche */}
+      {staffDirectives.filter((d) => d.targetRole === 'teacher' || d.targetRole === 'class_teacher' || d.targetRole === 'all').length > 0 && (
+        <div className="bg-white rounded-xl sm:rounded-2xl border border-rose-200 p-3 sm:p-4 shadow-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-1.5">
+              <ShieldAlert className="w-4 h-4 text-rose-600" />
+              <h3 className="text-xs font-bold text-slate-900">
+                Super Admin Directives for Teacher ({staffDirectives.filter((d) => d.targetRole === 'teacher' || d.targetRole === 'class_teacher' || d.targetRole === 'all').length})
+              </h3>
+            </div>
+            <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+              Institutional Mandates
+            </span>
+          </div>
+
+          <div className="space-y-1.5">
+            {staffDirectives
+              .filter((d) => d.targetRole === 'teacher' || d.targetRole === 'class_teacher' || d.targetRole === 'all')
+              .map((d) => (
+                <div
+                  key={d.id}
+                  className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                >
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center space-x-1.5 flex-wrap">
+                      <span className="font-bold text-xs text-slate-900">{d.title}</span>
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                          d.priority === 'urgent'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {d.priority}
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-medium">Due: {d.deadline}</span>
+                    </div>
+                    <p className="text-[11px] text-slate-600">{d.instructions}</p>
+                  </div>
+
+                  <div className="flex items-center space-x-1.5 shrink-0">
+                    {d.status !== 'completed' ? (
+                      <button
+                        onClick={() => updateDirectiveStatus(d.id, 'completed')}
+                        className="px-2 py-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300 transition cursor-pointer"
+                      >
+                        ✓ Mark Completed
+                      </button>
+                    ) : (
+                      <span className="text-[11px] font-bold text-emerald-700">Completed ✓</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
+
 
       {/* TAB 0: Live Virtual Classroom & Video Conferencing */}
       {activeTab === 'live_class' && (
@@ -487,9 +658,6 @@ export const TeacherDashboard: React.FC = () => {
                 <CalendarCheck className="w-5 h-5 text-blue-600" />
                 <span>Daily Roll-Call Attendance</span>
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Target Schema: <code className="text-blue-700 bg-blue-50 px-1 py-0.5 rounded font-mono">attendance/{"{date_classId_sectionId}"}</code>
-              </p>
             </div>
 
             {/* Class filter & Batch actions */}
@@ -512,26 +680,6 @@ export const TeacherDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Real-time Summary Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-            <div className="p-2.5 sm:p-3 rounded-lg bg-slate-50 border border-slate-200">
-              <div className="text-[10px] font-bold text-slate-500 uppercase">Enrolled</div>
-              <div className="text-lg font-black text-slate-900 mt-0.5">{filteredStudents.length}</div>
-            </div>
-            <div className="p-2.5 sm:p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
-              <div className="text-[10px] font-bold text-emerald-700 uppercase">Present</div>
-              <div className="text-lg font-black text-emerald-900 mt-0.5">{presentCount}</div>
-            </div>
-            <div className="p-2.5 sm:p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800">
-              <div className="text-[10px] font-bold text-rose-700 uppercase">Absent</div>
-              <div className="text-lg font-black text-rose-900 mt-0.5">{absentCount}</div>
-            </div>
-            <div className="p-2.5 sm:p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800">
-              <div className="text-[10px] font-bold text-amber-700 uppercase">Leave</div>
-              <div className="text-lg font-black text-amber-900 mt-0.5">{leaveCount}</div>
-            </div>
-          </div>
-
           {/* Student Roll-Call List */}
           <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden">
             {filteredStudents.map((student) => {
@@ -543,11 +691,25 @@ export const TeacherDashboard: React.FC = () => {
                   className="p-3 sm:p-4 flex items-center justify-between hover:bg-slate-50 transition-colors"
                 >
                   <div className="flex items-center space-x-3">
-                    <img
-                      src={student.avatarUrl}
-                      alt={student.fullName}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-200"
-                    />
+                    <div className="relative group shrink-0">
+                      <img
+                        src={student.avatarUrl}
+                        alt={student.fullName}
+                        className="w-10 h-10 rounded-full object-cover border border-slate-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedStudentForPhotoId(student.studentId);
+                          setStudentPhotoUrl(student.avatarUrl);
+                          setShowStudentPhotoModal(true);
+                        }}
+                        className="absolute -bottom-1 -right-1 p-0.5 rounded-full bg-blue-600 text-white shadow-xs opacity-75 hover:opacity-100 transition cursor-pointer"
+                        title="Update Student Photo / फ़ोटो बदलें"
+                      >
+                        <Camera className="w-2.5 h-2.5" />
+                      </button>
+                    </div>
                     <div>
                       <div className="text-sm font-bold text-slate-900 flex items-center space-x-2">
                         <span>{student.fullName}</span>
@@ -1008,6 +1170,162 @@ export const TeacherDashboard: React.FC = () => {
               </div>
             )}
           </form>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TEACHER PROFILE PHOTO MODAL */}
+      {/* ========================================================================= */}
+      {showTeacherPhotoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md p-4 sm:p-5 space-y-4 relative my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Update Teacher Photo (शिक्षक की फ़ोटो)
+                  </h2>
+                  <p className="text-slate-500 text-xs">
+                    Upload or choose profile photo for {currentUser.fullName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTeacherPhotoModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <PhotoUploadField
+                label="Teacher Profile Photo"
+                value={teacherPhotoUrl}
+                onChange={setTeacherPhotoUrl}
+                entityType="staff"
+                helperText="(Non-mandatory / वैकल्पिक)"
+              />
+
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowTeacherPhotoModal(false)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (teacherPhotoUrl.trim()) {
+                      updateUserAvatar(currentUser.uid, teacherPhotoUrl.trim());
+                      setPhotoSavedNotice('✓ Teacher profile photo updated successfully!');
+                      setTimeout(() => setPhotoSavedNotice(null), 4000);
+                    }
+                    setShowTeacherPhotoModal(false);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center space-x-1.5 transition cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save Teacher Photo</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* STUDENT PHOTO UPDATE MODAL */}
+      {/* ========================================================================= */}
+      {showStudentPhotoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 shadow-2xl w-full max-w-md p-4 sm:p-5 space-y-4 relative my-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <div className="p-2 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+                  <Users className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Student Photo Manager (छात्र फ़ोटो)
+                  </h2>
+                  <p className="text-slate-500 text-xs">
+                    Update student photo for roll call, profiles and report cards
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowStudentPhotoModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Select Student
+                </label>
+                <select
+                  value={selectedStudentForPhotoId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    setSelectedStudentForPhotoId(id);
+                    const stu = students.find((s) => s.studentId === id);
+                    if (stu) setStudentPhotoUrl(stu.avatarUrl);
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs font-medium bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {students.map((stu) => (
+                    <option key={stu.studentId} value={stu.studentId}>
+                      {stu.fullName} ({stu.className} • Adm #{stu.admissionNumber})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <PhotoUploadField
+                label="Student Photo"
+                value={studentPhotoUrl}
+                onChange={setStudentPhotoUrl}
+                entityType="student"
+                helperText="(Non-mandatory / वैकल्पिक)"
+              />
+
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowStudentPhotoModal(false)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (selectedStudentForPhotoId && studentPhotoUrl.trim()) {
+                      updateStudent(selectedStudentForPhotoId, { avatarUrl: studentPhotoUrl.trim() });
+                      setPhotoSavedNotice('✓ Student photo updated successfully!');
+                      setTimeout(() => setPhotoSavedNotice(null), 4000);
+                    }
+                    setShowStudentPhotoModal(false);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm flex items-center space-x-1.5 transition cursor-pointer"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>Save Student Photo</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

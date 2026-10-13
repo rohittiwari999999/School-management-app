@@ -14,6 +14,10 @@ import {
   CloudFunctionTriggerLog,
   OfflineAttendanceBatch,
   StaffCredential,
+  StaffActivityLog,
+  StaffDirective,
+  StaffCommunicationMessage,
+  StaffSalaryPayment,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -27,6 +31,10 @@ import {
   INITIAL_DASHBOARD_STATS,
   INITIAL_CLOUD_FUNCTION_LOGS,
   INITIAL_STAFF_CREDENTIALS,
+  INITIAL_STAFF_ACTIVITIES,
+  INITIAL_STAFF_DIRECTIVES,
+  INITIAL_STAFF_MESSAGES,
+  INITIAL_STAFF_SALARY_PAYMENTS,
 } from '../services/store';
 
 interface SMSContextType {
@@ -35,9 +43,26 @@ interface SMSContextType {
   users: AppUser[];
   staffCredentials: StaffCredential[];
   acceptStaffCredential: (credential: Omit<StaffCredential, 'id' | 'acceptedAt' | 'acceptedBySuperAdmin'>) => void;
+  updateUserAvatar: (uid: string, avatarUrl: string) => void;
+  updateStaffAvatar: (staffId: string, avatarUrl: string) => void;
   updateStaffCredentialStatus: (id: string, status: 'active' | 'pending' | 'suspended') => void;
   deleteStaffCredential: (id: string) => void;
+  staffActivities: StaffActivityLog[];
+  addStaffActivity: (activity: Omit<StaffActivityLog, 'id' | 'timestamp' | 'timeAgo'>) => void;
+  staffDirectives: StaffDirective[];
+  issueStaffDirective: (directive: Omit<StaffDirective, 'id' | 'issuedAt' | 'status'>) => void;
+  updateDirectiveStatus: (id: string, status: 'pending' | 'in_progress' | 'completed') => void;
+  deleteDirective: (id: string) => void;
+  staffMessages: StaffCommunicationMessage[];
+  sendStaffMessage: (toStaffId: string, toStaffName: string, message: string, isBroadcast?: boolean, priority?: 'normal' | 'urgent') => void;
+  markStaffMessageRead: (id: string) => void;
+  staffSalaryPayments: StaffSalaryPayment[];
+  disburseStaffSalary: (payment: Omit<StaffSalaryPayment, 'id' | 'createdAt' | 'receiptVoucherNumber'>) => StaffSalaryPayment;
+  deleteStaffSalaryPayment: (id: string) => void;
   students: StudentProfile[];
+  addStudent: (student: Omit<StudentProfile, 'studentId'> & { studentId?: string; initialTuitionFee?: number }) => StudentProfile;
+  updateStudent: (studentId: string, updates: Partial<StudentProfile>) => void;
+  deleteStudent: (studentId: string) => void;
   activeChild: StudentProfile;
   setActiveChildId: (id: string) => void;
   attendanceMap: Record<string, AttendanceStatus>;
@@ -85,7 +110,13 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [users, setUsers] = useState<AppUser[]>(INITIAL_USERS);
   const [currentUser, setCurrentUser] = useState<AppUser>(INITIAL_USERS[0]); // default Super Admin
   const [staffCredentials, setStaffCredentials] = useState<StaffCredential[]>(INITIAL_STAFF_CREDENTIALS);
-  const [students] = useState<StudentProfile[]>(INITIAL_STUDENTS);
+  const [staffActivities, setStaffActivities] = useState<StaffActivityLog[]>(INITIAL_STAFF_ACTIVITIES);
+  const [staffDirectives, setStaffDirectives] = useState<StaffDirective[]>(INITIAL_STAFF_DIRECTIVES);
+  const [staffMessages, setStaffMessages] = useState<StaffCommunicationMessage[]>(INITIAL_STAFF_MESSAGES);
+  const [staffSalaryPayments, setStaffSalaryPayments] = useState<StaffSalaryPayment[]>(
+    INITIAL_STAFF_SALARY_PAYMENTS
+  );
+  const [students, setStudents] = useState<StudentProfile[]>(INITIAL_STUDENTS);
   const [activeChildId, setActiveChildId] = useState<string>('STU_CLASS11_01');
 
   // Attendance state for Class 11-A students
@@ -441,37 +472,128 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const acceptStaffCredential = (data: Omit<StaffCredential, 'id' | 'acceptedAt' | 'acceptedBySuperAdmin'>) => {
     const newId = `CRED_${data.role.toUpperCase().slice(0, 4)}_${Date.now().toString().slice(-4)}`;
-    const newCredential: StaffCredential = {
-      ...data,
-      id: newId,
-      acceptedAt: new Date().toISOString(),
-      acceptedBySuperAdmin: true,
-    };
-    setStaffCredentials((prev) => [newCredential, ...prev]);
 
-    // Automatically create or update AppUser persona in users list so they can be logged in
     const avatarMap: Record<string, string> = {
       principal: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       teacher: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
       class_teacher: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=150&auto=format&fit=crop&q=80',
       accountant: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+      peon: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      maid: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+      security_guard: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+      driver: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    };
+
+    const finalAvatar = data.avatarUrl || avatarMap[data.role] || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80';
+
+    const newCredential: StaffCredential = {
+      ...data,
+      id: newId,
+      avatarUrl: finalAvatar,
+      acceptedAt: new Date().toISOString(),
+      acceptedBySuperAdmin: true,
+    };
+    setStaffCredentials((prev) => [newCredential, ...prev]);
+
+    const roleNameMap: Record<string, string> = {
+      principal: 'Principal',
+      teacher: 'Subject Faculty',
+      class_teacher: 'Class Teacher',
+      accountant: 'Accountant',
+      peon: 'Peon / Office Attendant',
+      maid: 'Maid / Housekeeping',
+      security_guard: 'Security Guard',
+      driver: 'Bus Driver',
+      lab_assistant: 'Lab Assistant',
+      librarian: 'Librarian',
+      other: 'Support Staff',
     };
 
     const newUser: AppUser = {
       uid: `USR_${newId}`,
       email: data.email,
       fullName: data.fullName,
-      role: data.role,
+      role: data.role === 'principal' || data.role === 'teacher' || data.role === 'class_teacher' || data.role === 'accountant' ? data.role : 'teacher',
       schoolId: 'SCH_GLOBAL_001',
-      avatarUrl: avatarMap[data.role] || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+      avatarUrl: finalAvatar,
       phoneNumber: data.phoneNumber,
-      designation: `${data.role === 'principal' ? 'Principal' : data.role === 'class_teacher' ? 'Class Teacher' : data.role === 'teacher' ? 'Subject Faculty' : 'Accountant'} • ${data.departmentOrClass}`,
+      designation: `${roleNameMap[data.role] || 'Staff'} • ${data.departmentOrClass}`,
     };
 
     setUsers((prev) => {
       const filtered = prev.filter((u) => u.email.toLowerCase() !== data.email.toLowerCase());
       return [...filtered, newUser];
     });
+  };
+
+  const updateUserAvatar = (uid: string, avatarUrl: string) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.uid === uid ? { ...u, avatarUrl } : u))
+    );
+    if (currentUser.uid === uid) {
+      setCurrentUser((prev) => ({ ...prev, avatarUrl }));
+    }
+    // Also sync to matching staff credential if exists
+    setStaffCredentials((prev) =>
+      prev.map((c) =>
+        c.email.toLowerCase() === currentUser.email.toLowerCase() || c.fullName === currentUser.fullName
+          ? { ...c, avatarUrl }
+          : c
+      )
+    );
+  };
+
+  const updateStaffAvatar = (staffId: string, avatarUrl: string) => {
+    setStaffCredentials((prev) =>
+      prev.map((c) => (c.id === staffId ? { ...c, avatarUrl } : c))
+    );
+    const target = staffCredentials.find((c) => c.id === staffId);
+    if (target) {
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email.toLowerCase() === target.email.toLowerCase() || u.fullName === target.fullName
+            ? { ...u, avatarUrl }
+            : u
+        )
+      );
+      if (
+        currentUser.email.toLowerCase() === target.email.toLowerCase() ||
+        currentUser.fullName === target.fullName
+      ) {
+        setCurrentUser((prev) => ({ ...prev, avatarUrl }));
+      }
+    }
+  };
+
+  const disburseStaffSalary = (
+    payment: Omit<StaffSalaryPayment, 'id' | 'createdAt' | 'receiptVoucherNumber'>
+  ): StaffSalaryPayment => {
+    const voucherSeq = Math.floor(100 + staffSalaryPayments.length + 1);
+    const newPayment: StaffSalaryPayment = {
+      ...payment,
+      id: `SAL_PAY_${Date.now()}`,
+      receiptVoucherNumber: `VCH-SAL-2026-${voucherSeq}`,
+      createdAt: new Date().toISOString(),
+    };
+
+    setStaffSalaryPayments((prev) => [newPayment, ...prev]);
+
+    // Also record in staff activity log so it is audited across the system
+    addStaffActivity({
+      staffId: payment.staffId,
+      staffName: payment.staffName,
+      role: payment.staffRole,
+      action: `Disbursed Salary / Fee: ₹${payment.netAmountPaid.toLocaleString()} (${payment.monthYear})`,
+      category: 'finance',
+      status: 'completed',
+      details: `${payment.remarks || 'Salary disbursement processed'} | Mode: ${payment.paymentMode.toUpperCase()} | Voucher: ${newPayment.receiptVoucherNumber} | Auth: ${payment.disbursedBy}`,
+    });
+
+    return newPayment;
+  };
+
+  const deleteStaffSalaryPayment = (id: string) => {
+    setStaffSalaryPayments((prev) => prev.filter((p) => p.id !== id));
   };
 
   const updateStaffCredentialStatus = (id: string, status: 'active' | 'pending' | 'suspended') => {
@@ -484,6 +606,171 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setStaffCredentials((prev) => prev.filter((c) => c.id !== id));
   };
 
+  const addStaffActivity = (act: Omit<StaffActivityLog, 'id' | 'timestamp' | 'timeAgo'>) => {
+    const newActivity: StaffActivityLog = {
+      ...act,
+      id: `ACT_${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timeAgo: 'Just now',
+    };
+    setStaffActivities((prev) => [newActivity, ...prev]);
+  };
+
+  const issueStaffDirective = (dir: Omit<StaffDirective, 'id' | 'issuedAt' | 'status'>) => {
+    const newDirective: StaffDirective = {
+      ...dir,
+      id: `DIR_${Date.now()}`,
+      issuedAt: new Date().toISOString().split('T')[0],
+      status: 'pending',
+    };
+    setStaffDirectives((prev) => [newDirective, ...prev]);
+
+    // Also record in activity log
+    addStaffActivity({
+      staffId: dir.targetStaffId,
+      staffName: dir.targetStaffName,
+      role: dir.targetRole === 'all' ? 'principal' : dir.targetRole,
+      action: `Super Admin Directive: "${dir.title}"`,
+      category: 'administration',
+      status: 'in_progress',
+      details: dir.instructions,
+    });
+  };
+
+  const updateDirectiveStatus = (id: string, status: 'pending' | 'in_progress' | 'completed') => {
+    setStaffDirectives((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, status } : d))
+    );
+  };
+
+  const deleteDirective = (id: string) => {
+    setStaffDirectives((prev) => prev.filter((d) => d.id !== id));
+  };
+
+  const sendStaffMessage = (
+    toStaffId: string,
+    toStaffName: string,
+    message: string,
+    isBroadcast = false,
+    priority: 'normal' | 'urgent' = 'normal'
+  ) => {
+    const newMsg: StaffCommunicationMessage = {
+      id: `MSG_${Date.now()}`,
+      fromUid: currentUser.uid,
+      fromName: `${currentUser.fullName} (Super Admin)`,
+      toStaffId,
+      toStaffName,
+      message,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isBroadcast,
+      priority,
+      isRead: false,
+    };
+    setStaffMessages((prev) => [newMsg, ...prev]);
+
+    // Also record in activity log
+    addStaffActivity({
+      staffId: toStaffId,
+      staffName: toStaffName,
+      role: 'principal',
+      action: isBroadcast ? 'Broadcast Institutional Circular' : `Direct Super Admin Message to ${toStaffName}`,
+      category: 'communication',
+      status: 'completed',
+      details: message,
+    });
+  };
+
+  const markStaffMessageRead = (id: string) => {
+    setStaffMessages((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, isRead: true } : m))
+    );
+  };
+
+  const addStudent = (
+    studentData: Omit<StudentProfile, 'studentId'> & { studentId?: string; initialTuitionFee?: number }
+  ): StudentProfile => {
+    const newStudentId =
+      studentData.studentId || `STU_ENR_${Date.now().toString().slice(-6)}`;
+    const newStudent: StudentProfile = {
+      ...studentData,
+      studentId: newStudentId,
+      avatarUrl:
+        studentData.avatarUrl ||
+        'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80',
+      attendancePercentage: studentData.attendancePercentage ?? 100,
+      parentUid: studentData.parentUid || `USR_PAR_${Date.now().toString().slice(-4)}`,
+    };
+
+    setStudents((prev) => [newStudent, ...prev]);
+
+    // Initialize attendance status as Present
+    setAttendanceMap((prev) => ({
+      ...prev,
+      [newStudentId]: 'P',
+    }));
+
+    // If initial admission/tuition fee specified, generate initial invoice
+    if (studentData.initialTuitionFee && studentData.initialTuitionFee > 0) {
+      const compositeFee = studentData.initialTuitionFee;
+      const registrationFee = 1500;
+      const totalAmount = compositeFee + registrationFee;
+      const newInvoice: Invoice = {
+        invoiceId: `INV_${new Date().getFullYear()}_${Date.now().toString().slice(-4)}`,
+        schoolId: 'SCH_GLOBAL_001',
+        studentId: newStudentId,
+        studentName: newStudent.fullName,
+        classId: newStudent.classId,
+        className: newStudent.className,
+        term: 'Annual / Admission Term 2026-27',
+        lineItems: [
+          {
+            id: `FEE_COMP_${Date.now()}`,
+            feeType: 'tuition',
+            title: 'Admission & Composite Academic Fee',
+            amount: compositeFee,
+          },
+          {
+            id: `FEE_REG_${Date.now()}`,
+            feeType: 'examination',
+            title: 'Registration & Smart Student ID Dossier',
+            amount: registrationFee,
+          },
+        ],
+        subtotal: totalAmount,
+        dueDate: new Date(Date.now() + 15 * 86400000).toISOString().split('T')[0],
+        finePerDay: 50,
+        fineAccumulated: 0,
+        totalPayable: totalAmount,
+        amountPaid: 0,
+        status: 'pending',
+      };
+      setInvoices((prev) => [newInvoice, ...prev]);
+    }
+
+    // Record in staff activity log so admin/clerk/principal see enrollment audit
+    addStaffActivity({
+      staffId: currentUser.uid,
+      staffName: currentUser.fullName,
+      role: currentUser.role === 'accountant' ? 'accountant' : 'principal',
+      action: `New Student Admission: ${newStudent.fullName} (${newStudent.className})`,
+      category: 'administration',
+      status: 'completed',
+      details: `Adm #${newStudent.admissionNumber}, Roll: ${newStudent.boardRollNumber || 'Auto-assigned'}, Parent: ${newStudent.parentContact}. Synced in Class Teacher console.`,
+    });
+
+    return newStudent;
+  };
+
+  const updateStudent = (studentId: string, updates: Partial<StudentProfile>) => {
+    setStudents((prev) =>
+      prev.map((s) => (s.studentId === studentId ? { ...s, ...updates } : s))
+    );
+  };
+
+  const deleteStudent = (studentId: string) => {
+    setStudents((prev) => prev.filter((s) => s.studentId !== studentId));
+  };
+
   return (
     <SMSContext.Provider
       value={{
@@ -492,9 +779,26 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         users,
         staffCredentials,
         acceptStaffCredential,
+        updateUserAvatar,
+        updateStaffAvatar,
         updateStaffCredentialStatus,
         deleteStaffCredential,
+        staffActivities,
+        addStaffActivity,
+        staffDirectives,
+        issueStaffDirective,
+        updateDirectiveStatus,
+        deleteDirective,
+        staffMessages,
+        sendStaffMessage,
+        markStaffMessageRead,
+        staffSalaryPayments,
+        disburseStaffSalary,
+        deleteStaffSalaryPayment,
         students,
+        addStudent,
+        updateStudent,
+        deleteStudent,
         activeChild,
         setActiveChildId,
         attendanceMap,

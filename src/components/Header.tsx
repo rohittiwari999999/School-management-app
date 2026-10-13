@@ -156,7 +156,7 @@ export const Header: React.FC = () => {
                   {currentUser.fullName.split(' ')[0]}
                 </div>
                 <div className="text-[9px] text-blue-400 font-medium leading-tight">
-                  {currentUser.role.replace('_', ' ')}
+                  {currentUser.role === 'class_teacher' ? 'Teacher' : currentUser.role.replace('_', ' ')}
                 </div>
               </div>
             </div>
@@ -174,9 +174,11 @@ export const Header: React.FC = () => {
 
           <div className="flex items-center space-x-1 overflow-x-auto py-0.5">
             {users
-              .filter((u) => u.role !== 'student')
+              .filter((u) => u.role !== 'student' && u.role !== 'class_teacher')
               .map((u) => {
-                const isSelected = currentUser.uid === u.uid;
+                const isSelected =
+                  currentUser.uid === u.uid ||
+                  (u.role === 'teacher' && currentUser.role === 'class_teacher');
                 let roleBadge = '';
                 let badgeColor = '';
                 switch (u.role) {
@@ -189,12 +191,9 @@ export const Header: React.FC = () => {
                     badgeColor = 'from-amber-500 to-orange-600';
                     break;
                   case 'teacher':
+                  case 'class_teacher':
                     roleBadge = 'Teacher';
                     badgeColor = 'from-blue-600 to-indigo-600';
-                    break;
-                  case 'class_teacher':
-                    roleBadge = 'Class Teacher';
-                    badgeColor = 'from-teal-600 to-cyan-600';
                     break;
                   case 'parent_student':
                   case 'parent':
