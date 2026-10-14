@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/core/widgets/role_switcher_bar.dart';
 import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
 import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
 
@@ -96,9 +97,14 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(
         child: Column(
+          children: [
+            const RoleSwitcherBar(),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Sibling Switcher Header Bar
@@ -303,8 +309,12 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  ],
+),
+),
+);
+}
 
   Widget _buildActionCard(IconData icon, String title, String subtitle, Color color, VoidCallback onTap) {
     return InkWell(

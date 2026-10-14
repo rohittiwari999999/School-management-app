@@ -9,6 +9,7 @@ class AppUser {
   final String schoolId;
   final String? phoneNumber;
   final String? avatarUrl;
+  final String? designation;
   final List<String> fcmTokens;
   final Map<String, dynamic> metadata;
 
@@ -25,6 +26,7 @@ class AppUser {
     required this.schoolId,
     this.phoneNumber,
     this.avatarUrl,
+    this.designation,
     this.fcmTokens = const [],
     this.metadata = const {},
     this.studentClassId,

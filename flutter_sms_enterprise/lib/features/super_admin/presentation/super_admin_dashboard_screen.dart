@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:edupulse_sms/core/constants/app_constants.dart';
+import 'package:edupulse_sms/core/widgets/role_switcher_bar.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 
 class StaffCredentialItem {
@@ -300,15 +301,24 @@ class _SuperAdminDashboardScreenState
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          // TAB 1: ACCEPT NEW STAFF CREDENTIALS FORM
-          _buildAcceptCredentialsTab(),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const RoleSwitcherBar(),
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // TAB 1: ACCEPT NEW STAFF CREDENTIALS FORM
+                  _buildAcceptCredentialsTab(),
 
-          // TAB 2: STAFF LOGIN ROSTER DIRECTORY
-          _buildStaffRosterTab(filteredList),
-        ],
+                  // TAB 2: STAFF LOGIN ROSTER DIRECTORY
+                  _buildStaffRosterTab(filteredList),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

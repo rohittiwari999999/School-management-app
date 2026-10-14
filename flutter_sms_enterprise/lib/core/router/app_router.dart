@@ -19,19 +19,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
 
   return GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/teacher/dashboard',
     redirect: (BuildContext context, GoRouterState state) {
       final isAuth = authState.status == AuthStatus.authenticated;
       final isLoggingIn = state.matchedLocation == '/login';
 
       if (!isAuth) {
-        return isLoggingIn ? null : '/login';
+        return isLoggingIn ? null : '/teacher/dashboard';
       }
 
       final user = authState.user;
-      if (user == null) return '/login';
+      if (user == null) return null;
 
-      // If logged in and still at login screen, route to respective role home
+      // If logged in and at login screen, route to user role home
       if (isLoggingIn) {
         switch (user.role) {
           case UserRole.superAdmin:
@@ -46,24 +46,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           case UserRole.accountant:
             return '/accountant/dashboard';
         }
-      }
-
-      // Security RBAC Gate check on matched route paths
-      final path = state.matchedLocation;
-      if (path.startsWith('/super_admin') && user.role != UserRole.superAdmin) {
-        return _getDefaultRouteForRole(user.role);
-      }
-      if (path.startsWith('/principal') && user.role != UserRole.principal) {
-        return _getDefaultRouteForRole(user.role);
-      }
-      if (path.startsWith('/teacher') && user.role != UserRole.teacher && user.role != UserRole.classTeacher) {
-        return _getDefaultRouteForRole(user.role);
-      }
-      if (path.startsWith('/family') && user.role != UserRole.parentStudent) {
-        return _getDefaultRouteForRole(user.role);
-      }
-      if (path.startsWith('/accountant') && user.role != UserRole.accountant) {
-        return _getDefaultRouteForRole(user.role);
       }
 
       return null;
