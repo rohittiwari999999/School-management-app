@@ -58,9 +58,6 @@ class _AccountantDashboardScreenState extends ConsumerState<AccountantDashboardS
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  String _selectedStatus = 'all';
-  String _searchQuery = '';
-
   // Photo presets for student & staff
   final List<String> _photoPresets = [
     'https://images.unsplash.com/photo-1544717305-2782549b5136?w=150&auto=format&fit=crop&q=80',

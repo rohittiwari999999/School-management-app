@@ -35,19 +35,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // If logged in and at login screen, route to user role home
       if (isLoggingIn) {
-        switch (user.role) {
-          case UserRole.superAdmin:
-            return '/super_admin/dashboard';
-          case UserRole.principal:
-            return '/principal/dashboard';
-          case UserRole.teacher:
-          case UserRole.classTeacher:
-            return '/teacher/dashboard';
-          case UserRole.parentStudent:
-            return '/family/dashboard';
-          case UserRole.accountant:
-            return '/accountant/dashboard';
-        }
+        return _getDefaultRouteForRole(user.role);
       }
 
       return null;

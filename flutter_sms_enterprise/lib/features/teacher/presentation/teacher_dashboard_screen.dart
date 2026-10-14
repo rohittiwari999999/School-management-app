@@ -436,9 +436,9 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.emerald.withOpacity(0.2),
+                                color: const Color(0xFF10B981).withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.emerald.withOpacity(0.4)),
+                                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
                               ),
                               child: Text(
                                 _statusNotice!,
