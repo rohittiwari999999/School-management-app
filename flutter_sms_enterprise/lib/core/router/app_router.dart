@@ -19,17 +19,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authControllerProvider);
 
   return GoRouter(
-    initialLocation: '/teacher/dashboard',
+    initialLocation: '/login',
     redirect: (BuildContext context, GoRouterState state) {
       final isAuth = authState.status == AuthStatus.authenticated;
       final isLoggingIn = state.matchedLocation == '/login';
 
       if (!isAuth) {
-        return isLoggingIn ? null : '/teacher/dashboard';
+        return isLoggingIn ? null : '/login';
       }
 
       final user = authState.user;
-      if (user == null) return null;
+      if (user == null) {
+        return isLoggingIn ? null : '/login';
+      }
 
       // If logged in and at login screen, route to user role home
       if (isLoggingIn) {
