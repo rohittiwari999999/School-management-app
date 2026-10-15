@@ -779,6 +779,163 @@ class _SuperAdminDashboardScreenState
     );
   }
 
+  void _showIssueDirectiveDialog() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.only(
+            top: 20,
+            left: 20,
+            right: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.assignment_turned_in_rounded, color: Color(0xFFE11D48), size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          'Issue Official Directive',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      onPressed: () => Navigator.of(ctx).pop(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _directiveTitleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Directive Title / Order Subject *',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _directiveInstructionsController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Instructions & Action Items *',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _directivePriority,
+                        decoration: const InputDecoration(labelText: 'Priority', border: OutlineInputBorder()),
+                        items: const [
+                          DropdownMenuItem(value: 'urgent', child: Text('Urgent')),
+                          DropdownMenuItem(value: 'high', child: Text('High')),
+                          DropdownMenuItem(value: 'normal', child: Text('Normal')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setModalState(() => _directivePriority = val);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _directiveCategory,
+                        decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                        items: const [
+                          DropdownMenuItem(value: 'academic', child: Text('Academic')),
+                          DropdownMenuItem(value: 'finance', child: Text('Finance')),
+                          DropdownMenuItem(value: 'compliance', child: Text('Compliance')),
+                          DropdownMenuItem(value: 'administration', child: Text('Admin')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setModalState(() => _directiveCategory = val);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  value: _directiveTarget,
+                  decoration: const InputDecoration(labelText: 'Target Staff Group', border: OutlineInputBorder()),
+                  items: const [
+                    DropdownMenuItem(value: 'All Faculty & Staff', child: Text('All Faculty & Staff')),
+                    DropdownMenuItem(value: 'Principal & Administration Office', child: Text('Principal & Admin')),
+                    DropdownMenuItem(value: 'All Subject Faculty & Mentors', child: Text('Subject Faculty & Mentors')),
+                    DropdownMenuItem(value: 'Finance & Accounts Desk', child: Text('Finance & Accounts Desk')),
+                    DropdownMenuItem(value: 'Nursery & Pre-Primary Staff', child: Text('Nursery & Pre-Primary Staff')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) setModalState(() => _directiveTarget = val);
+                  },
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_directiveTitleController.text.trim().isEmpty) return;
+                      final newDir = StaffDirectiveItem(
+                        id: 'DIR_${DateTime.now().millisecondsSinceEpoch}',
+                        title: _directiveTitleController.text.trim(),
+                        instructions: _directiveInstructionsController.text.trim().isEmpty
+                            ? 'Executive compliance required.'
+                            : _directiveInstructionsController.text.trim(),
+                        targetStaffName: _directiveTarget,
+                        priority: _directivePriority,
+                        category: _directiveCategory,
+                        deadline: DateFormat('yyyy-MM-dd').format(DateTime.now().add(const Duration(days: 7))),
+                        issuedAt: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                        status: 'in_progress',
+                      );
+                      setState(() {
+                        _directives.insert(0, newDir);
+                        _directiveTitleController.clear();
+                        _directiveInstructionsController.clear();
+                      });
+                      Navigator.of(ctx).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Directive "${newDir.title}" issued successfully!'),
+                          backgroundColor: const Color(0xFFE11D48),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE11D48),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Dispatch Official Order', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showAuthorizeStaffDialog() {
     showModalBottomSheet(
       context: context,
@@ -2159,11 +2316,7 @@ class _SuperAdminDashboardScreenState
           children: [
             const Text('Super Admin Official Directives', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
             ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Directive creation desk ready.')),
-                );
-              },
+              onPressed: _showIssueDirectiveDialog,
               icon: const Icon(Icons.add_rounded, size: 14),
               label: const Text('New Directive', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(

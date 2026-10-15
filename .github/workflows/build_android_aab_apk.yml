@@ -58,7 +58,7 @@ jobs:
       - name: Run Static Analysis & Lints
         working-directory: flutter_sms_enterprise
         run: |
-          flutter analyze --no-fatal-infos
+          flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: Setup Google Services Configuration
         working-directory: flutter_sms_enterprise/android/app

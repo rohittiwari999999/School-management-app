@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:edupulse_sms/core/widgets/role_switcher_bar.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 import 'package:edupulse_sms/features/attendance/data/attendance_repository.dart';
 import 'package:edupulse_sms/features/conference/data/conference_repository.dart';
