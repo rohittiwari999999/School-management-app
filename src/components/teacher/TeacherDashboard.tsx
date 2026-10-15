@@ -33,6 +33,7 @@ import {
   GraduationCap,
   Camera,
   Upload,
+  LogOut,
 } from 'lucide-react';
 import { PhotoUploadField } from '../common/PhotoUploadField';
 import { AttendanceStatus } from '../../types';
@@ -65,6 +66,7 @@ export const TeacherDashboard: React.FC = () => {
     createConference,
     staffDirectives,
     updateDirectiveStatus,
+    logout,
   } = useSMS();
 
   // Photo Update Modals State
@@ -228,6 +230,16 @@ export const TeacherDashboard: React.FC = () => {
             >
               <Users className="w-3.5 h-3.5" />
               <span>Student Photos</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={logout}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-800/80 text-slate-300 hover:text-rose-200 text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-xs shrink-0"
+              title="Sign Out to Front Page Login Screen"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>

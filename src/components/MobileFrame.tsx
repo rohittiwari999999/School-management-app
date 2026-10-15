@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSMS } from '../context/SMSContext';
-import { Wifi, Battery, Signal, ArrowLeft } from 'lucide-react';
+import { Wifi, Battery, Signal } from 'lucide-react';
+import { LoginScreen } from './auth/LoginScreen';
 import { SuperAdminDashboard } from './super_admin/SuperAdminDashboard';
 import { AdminDashboard } from './admin/AdminDashboard';
 import { TeacherDashboard } from './teacher/TeacherDashboard';
@@ -8,7 +9,7 @@ import { ParentStudentDashboard } from './parent_student/ParentStudentDashboard'
 import { AccountantDashboard } from './accountant/AccountantDashboard';
 
 export const MobileFrame: React.FC = () => {
-  const { currentUser, deviceType } = useSMS();
+  const { currentUser, deviceType, isAuthenticated } = useSMS();
 
   // Pick device frame dimensions
   let frameWidth = 'w-full max-w-[390px]';
@@ -32,6 +33,10 @@ export const MobileFrame: React.FC = () => {
   }
 
   const renderCurrentRoleScreen = () => {
+    if (!isAuthenticated) {
+      return <LoginScreen isMobileEmulator={true} />;
+    }
+
     switch (currentUser.role) {
       case 'super_admin':
         return <SuperAdminDashboard />;

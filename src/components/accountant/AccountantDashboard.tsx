@@ -40,6 +40,7 @@ import {
   Shield,
   Truck,
   Camera,
+  LogOut,
 } from 'lucide-react';
 import { PhotoUploadField } from '../common/PhotoUploadField';
 
@@ -65,6 +66,7 @@ export const AccountantDashboard: React.FC = () => {
     staffCredentials,
     currentUser,
     acceptStaffCredential,
+    logout,
   } = useSMS();
 
   // Navigation tab state: 8 distinct functional consoles
@@ -566,6 +568,15 @@ export const AccountantDashboard: React.FC = () => {
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export CSV</span>
+            </button>
+
+            <button
+              onClick={logout}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-800/80 text-slate-300 hover:text-rose-200 text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-xs shrink-0"
+              title="Sign Out to Front Page Login Screen"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>

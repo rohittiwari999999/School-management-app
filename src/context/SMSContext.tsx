@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   AppUser,
+  UserRole,
   StudentProfile,
   AttendanceRecord,
   TimetableSlot,
@@ -102,6 +103,10 @@ interface SMSContextType {
   setViewMode: (mode: 'desktop' | 'mobile' | 'code') => void;
   deviceType: 'iphone' | 'pixel' | 'ipad';
   setDeviceType: (dev: 'iphone' | 'pixel' | 'ipad') => void;
+  isAuthenticated: boolean;
+  login: (email: string, password?: string) => { success: boolean; error?: string };
+  loginAsDemoRole: (role: UserRole | string) => void;
+  logout: () => void;
 }
 
 const SMSContext = createContext<SMSContextType | undefined>(undefined);
@@ -160,6 +165,90 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Simulator UI State
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile' | 'code'>('desktop');
   const [deviceType, setDeviceType] = useState<'iphone' | 'pixel' | 'ipad'>('iphone');
+
+  // Authentication State (Starts false or loads from localStorage)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('edupulse_auth') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const loginAsDemoRole = (role: UserRole | string) => {
+    let target = users.find((u) => u.role === role);
+    if (!target) {
+      if (role === 'teacher') {
+        target = users.find((u) => u.email === 'ananya.sen@edupulse.edu') || users.find((u) => u.role === 'teacher');
+      } else if (role === 'class_teacher') {
+        target = users.find((u) => u.email === 'priya.sharma@edupulse.edu') || users.find((u) => u.role === 'class_teacher');
+      } else if (role === 'parent' || role === 'student' || role === 'parent_student') {
+        target = users.find((u) => u.role === 'parent_student');
+      }
+    }
+    if (target) {
+      setCurrentUser(target);
+      setIsAuthenticated(true);
+      try {
+        localStorage.setItem('edupulse_auth', 'true');
+        localStorage.setItem('edupulse_uid', target.uid);
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const login = (email: string, password?: string): { success: boolean; error?: string } => {
+    const trimmed = email.trim().toLowerCase();
+    const target = users.find((u) => u.email.toLowerCase() === trimmed);
+    if (target) {
+      setCurrentUser(target);
+      setIsAuthenticated(true);
+      try {
+        localStorage.setItem('edupulse_auth', 'true');
+        localStorage.setItem('edupulse_uid', target.uid);
+      } catch {
+        // ignore
+      }
+      return { success: true };
+    }
+
+    const foundStaff = staffCredentials.find((s) => s.email.toLowerCase() === trimmed);
+    if (foundStaff) {
+      const staffUser: AppUser = {
+        uid: foundStaff.id,
+        email: foundStaff.email,
+        fullName: foundStaff.fullName,
+        role: (foundStaff.role === 'principal' ? 'principal' : foundStaff.role === 'accountant' ? 'accountant' : 'teacher') as UserRole,
+        schoolId: 'SCH_GLOBAL_001',
+        avatarUrl: foundStaff.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        phoneNumber: foundStaff.phoneNumber,
+        designation: `${foundStaff.role} (${foundStaff.departmentOrClass})`,
+      };
+      setCurrentUser(staffUser);
+      setIsAuthenticated(true);
+      try {
+        localStorage.setItem('edupulse_auth', 'true');
+        localStorage.setItem('edupulse_uid', staffUser.uid);
+      } catch {
+        // ignore
+      }
+      return { success: true };
+    }
+
+    return { success: false, error: 'Invalid credentials. Please verify email and password or use Quick Demo Access.' };
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    setActiveConference(null);
+    try {
+      localStorage.removeItem('edupulse_auth');
+      localStorage.removeItem('edupulse_uid');
+    } catch {
+      // ignore
+    }
+  };
 
   const activeChild =
     students.find((s) => s.studentId === activeChildId) || students[2];
@@ -837,6 +926,10 @@ export const SMSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setViewMode,
         deviceType,
         setDeviceType,
+        isAuthenticated,
+        login,
+        loginAsDemoRole,
+        logout,
       }}
     >
       {children}

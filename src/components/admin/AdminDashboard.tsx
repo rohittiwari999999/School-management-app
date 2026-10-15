@@ -36,6 +36,7 @@ import {
   Check,
   X,
   Camera,
+  LogOut,
 } from 'lucide-react';
 import { TimetableSlot, StaffRole, StaffSalaryPayment } from '../../types';
 import { PhaseRoadmapModal } from '../PhaseRoadmapModal';
@@ -66,6 +67,7 @@ export const AdminDashboard: React.FC = () => {
     staffSalaryPayments,
     disburseStaffSalary,
     acceptStaffCredential,
+    logout,
   } = useSMS();
 
   // Active Tab for Principal Dashboard Consoles
@@ -289,6 +291,15 @@ export const AdminDashboard: React.FC = () => {
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span className="hidden sm:inline">Roadmap</span>
+            </button>
+
+            <button
+              onClick={logout}
+              className="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-800/80 text-slate-300 hover:text-rose-200 text-xs font-bold transition-all shadow-sm flex items-center space-x-1 cursor-pointer shrink-0"
+              title="Sign Out to Front Page Login Screen"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">Sign Out</span>
             </button>
           </div>
         </div>

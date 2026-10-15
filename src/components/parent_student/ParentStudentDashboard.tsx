@@ -25,6 +25,7 @@ import {
   Radio,
   Play,
   MonitorUp,
+  LogOut,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -43,6 +44,7 @@ export const ParentStudentDashboard: React.FC = () => {
     currentUser,
     conferences,
     joinConference,
+    logout,
   } = useSMS();
 
   // Unified tabs combining parent & student workflows
@@ -129,41 +131,52 @@ export const ParentStudentDashboard: React.FC = () => {
             </p>
           </div>
 
-          {/* Sibling Child Switcher - Compact */}
-          <div className="bg-slate-900/80 p-1.5 rounded-xl border border-indigo-800/40 shrink-0">
-            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
-              Student:
-            </div>
-            <div className="flex items-center space-x-1.5 overflow-x-auto">
-              {familyStudents.map((child) => {
-                const isSelected = activeChild.studentId === child.studentId;
-                let tierTag = 'Nursery';
-                if (child.tier === 'primary') tierTag = 'Class 5';
-                if (child.tier === 'senior_sec') tierTag = 'Class 11';
+          {/* Right Actions: Sibling Child Switcher & Sign Out */}
+          <div className="flex items-center space-x-2 shrink-0">
+            <div className="bg-slate-900/80 p-1.5 rounded-xl border border-indigo-800/40 shrink-0">
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 px-1">
+                Student:
+              </div>
+              <div className="flex items-center space-x-1.5 overflow-x-auto">
+                {familyStudents.map((child) => {
+                  const isSelected = activeChild.studentId === child.studentId;
+                  let tierTag = 'Nursery';
+                  if (child.tier === 'primary') tierTag = 'Class 5';
+                  if (child.tier === 'senior_sec') tierTag = 'Class 11';
 
-                return (
-                  <button
-                    key={child.studentId}
-                    onClick={() => setActiveChildId(child.studentId)}
-                    className={`flex items-center space-x-1.5 px-2 py-1 rounded-lg border text-left transition-all shrink-0 cursor-pointer ${
-                      isSelected
-                        ? 'bg-purple-600 border-purple-400 text-white shadow-sm font-semibold'
-                        : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white'
-                    }`}
-                  >
-                    <img
-                      src={child.avatarUrl}
-                      alt={child.fullName}
-                      className="w-6 h-6 rounded-full object-cover border border-white/40"
-                    />
-                    <div>
-                      <div className="text-xs font-bold leading-tight">{child.fullName.split(' ')[0]}</div>
-                      <div className="text-[9px] opacity-75">{tierTag}</div>
-                    </div>
-                  </button>
-                );
-              })}
+                  return (
+                    <button
+                      key={child.studentId}
+                      onClick={() => setActiveChildId(child.studentId)}
+                      className={`flex items-center space-x-1.5 px-2 py-1 rounded-lg border text-left transition-all shrink-0 cursor-pointer ${
+                        isSelected
+                          ? 'bg-purple-600 border-purple-400 text-white shadow-sm font-semibold'
+                          : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white'
+                      }`}
+                    >
+                      <img
+                        src={child.avatarUrl}
+                        alt={child.fullName}
+                        className="w-6 h-6 rounded-full object-cover border border-white/40"
+                      />
+                      <div>
+                        <div className="text-xs font-bold leading-tight">{child.fullName.split(' ')[0]}</div>
+                        <div className="text-[9px] opacity-75">{tierTag}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            <button
+              onClick={logout}
+              className="px-2.5 py-2 rounded-xl bg-slate-800/90 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-800/80 text-slate-300 hover:text-rose-200 text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-xs shrink-0"
+              title="Sign Out to Front Page Login Screen"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
           </div>
         </div>
       </div>

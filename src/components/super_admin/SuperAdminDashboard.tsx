@@ -53,6 +53,7 @@ import {
   Shield,
   FileText,
   Camera,
+  LogOut,
 } from 'lucide-react';
 import {
   StaffRole,
@@ -85,6 +86,7 @@ export const SuperAdminDashboard: React.FC = () => {
     setCurrentUser,
     students,
     dashboardStats,
+    logout,
   } = useSMS();
 
   // Modal window state for Staff Login Credentials
@@ -551,6 +553,15 @@ export const SuperAdminDashboard: React.FC = () => {
               <div className="text-[10px] text-slate-400">Staff Count</div>
               <div className="text-sm sm:text-base font-black text-rose-300">{staffCredentials.length} Active</div>
             </div>
+
+            <button
+              onClick={logout}
+              className="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-rose-950/80 border border-slate-700 hover:border-rose-800/80 text-slate-300 hover:text-rose-200 text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-sm shrink-0"
+              title="Sign Out to Front Page Login Screen"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
           </div>
         </div>
       </div>

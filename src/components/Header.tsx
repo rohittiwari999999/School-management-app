@@ -5,31 +5,27 @@ import {
   Smartphone,
   Monitor,
   Code2,
-  Shield,
-  UserCheck,
   Sparkles,
-  Database,
-  Flame,
   ShieldCheck,
   Wifi,
   WifiOff,
+  LogOut,
+  Lock,
 } from 'lucide-react';
-import { UserRole } from '../types';
 import { SecurityAuditModal } from './security/SecurityAuditModal';
 import { PhaseRoadmapModal } from './PhaseRoadmapModal';
 
 export const Header: React.FC = () => {
   const {
     currentUser,
-    setCurrentUser,
-    users,
     viewMode,
     setViewMode,
     deviceType,
     setDeviceType,
     isNetworkOnline,
     toggleNetworkOnline,
-    offlineSyncQueue,
+    isAuthenticated,
+    logout,
   } = useSMS();
 
   const [showSecurityModal, setShowSecurityModal] = useState(false);
@@ -51,52 +47,90 @@ export const Header: React.FC = () => {
                   EduPulse
                 </span>
                 <span className="hidden sm:inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                  K-12
+                  K-12 SMS
                 </span>
               </div>
             </div>
           </div>
 
-          {/* View Mode Switcher (Desktop / Mobile / Code) */}
-          <div className="flex items-center space-x-0.5 bg-slate-800/90 p-0.5 sm:p-1 rounded-lg border border-slate-700/60 shrink-0">
-            <button
-              onClick={() => setViewMode('desktop')}
-              className={`flex items-center space-x-1 px-2 py-1 rounded text-[11px] sm:text-xs font-semibold transition-all ${
-                viewMode === 'desktop'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Desktop View"
-            >
-              <Monitor className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Desktop</span>
-            </button>
+          {/* View Mode Switcher (Desktop / Mobile / Code) + Device Frame Selector */}
+          <div className="flex items-center space-x-1">
+            <div className="flex items-center space-x-0.5 bg-slate-800/90 p-0.5 sm:p-1 rounded-lg border border-slate-700/60 shrink-0">
+              <button
+                onClick={() => setViewMode('desktop')}
+                className={`flex items-center space-x-1 px-2 py-1 rounded text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === 'desktop'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Desktop Web Preview"
+              >
+                <Monitor className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Desktop</span>
+              </button>
 
-            <button
-              onClick={() => setViewMode('mobile')}
-              className={`flex items-center space-x-1 px-2 py-1 rounded text-[11px] sm:text-xs font-semibold transition-all ${
-                viewMode === 'mobile'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Mobile Emulator"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Mobile</span>
-            </button>
+              <button
+                onClick={() => setViewMode('mobile')}
+                className={`flex items-center space-x-1 px-2 py-1 rounded text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === 'mobile'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Flutter Mobile Emulator"
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Mobile</span>
+              </button>
 
-            <button
-              onClick={() => setViewMode('code')}
-              className={`flex items-center space-x-1 px-2 py-1 rounded text-[11px] sm:text-xs font-semibold transition-all ${
-                viewMode === 'code'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Flutter Code"
-            >
-              <Code2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Code</span>
-            </button>
+              <button
+                onClick={() => setViewMode('code')}
+                className={`flex items-center space-x-1 px-2 py-1 rounded text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                  viewMode === 'code'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+                title="Flutter Mobile Code"
+              >
+                <Code2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Code</span>
+              </button>
+            </div>
+
+            {/* Mobile Device Selector (Only shown if mobile emulator is active) */}
+            {viewMode === 'mobile' && (
+              <div className="hidden md:flex items-center space-x-0.5 text-xs text-slate-300 bg-slate-800/80 p-0.5 rounded-lg border border-slate-700/60 shrink-0">
+                <button
+                  onClick={() => setDeviceType('iphone')}
+                  className={`px-1.5 py-0.5 rounded text-[10px] cursor-pointer ${
+                    deviceType === 'iphone'
+                      ? 'bg-blue-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  iPhone
+                </button>
+                <button
+                  onClick={() => setDeviceType('pixel')}
+                  className={`px-1.5 py-0.5 rounded text-[10px] cursor-pointer ${
+                    deviceType === 'pixel'
+                      ? 'bg-blue-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Pixel
+                </button>
+                <button
+                  onClick={() => setDeviceType('ipad')}
+                  className={`px-1.5 py-0.5 rounded text-[10px] cursor-pointer ${
+                    deviceType === 'ipad'
+                      ? 'bg-blue-600 text-white font-bold'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  iPad
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Current Active Persona & Controls */}
@@ -104,12 +138,12 @@ export const Header: React.FC = () => {
             {/* Wi-Fi Toggle */}
             <button
               onClick={toggleNetworkOnline}
-              className={`flex items-center space-x-1 px-1.5 sm:px-2 py-1 rounded text-[11px] transition-all border ${
+              className={`flex items-center space-x-1 px-1.5 sm:px-2 py-1 rounded text-[11px] transition-all border cursor-pointer ${
                 isNetworkOnline
                   ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
                   : 'bg-amber-950/80 border-amber-500/50 text-amber-300 animate-pulse'
               }`}
-              title={isNetworkOnline ? 'Online' : 'Offline'}
+              title={isNetworkOnline ? 'Online Sync Active' : 'Offline Cache Mode'}
             >
               {isNetworkOnline ? (
                 <>
@@ -127,7 +161,7 @@ export const Header: React.FC = () => {
             {/* Security Audit Modal Button */}
             <button
               onClick={() => setShowSecurityModal(true)}
-              className="p-1 sm:px-2 sm:py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] border border-slate-700 flex items-center space-x-1"
+              className="p-1 sm:px-2 sm:py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] border border-slate-700 flex items-center space-x-1 cursor-pointer"
               title="Security & RBAC Audit"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -137,120 +171,47 @@ export const Header: React.FC = () => {
             {/* Roadmap Status Button */}
             <button
               onClick={() => setShowPhaseModal(true)}
-              className="p-1 sm:px-2 sm:py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] border border-slate-700 flex items-center space-x-1"
+              className="p-1 sm:px-2 sm:py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] border border-slate-700 flex items-center space-x-1 cursor-pointer"
               title="Phase Delivery Roadmap"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span className="hidden lg:inline">Roadmap</span>
             </button>
 
-            {/* Profile Avatar */}
-            <div className="flex items-center space-x-1 pl-1 border-l border-slate-800">
-              <img
-                src={currentUser.avatarUrl}
-                alt={currentUser.fullName}
-                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-blue-400/40 object-cover"
-              />
-              <div className="hidden xl:block text-left">
-                <div className="text-[11px] font-semibold text-slate-200 leading-tight">
-                  {currentUser.fullName.split(' ')[0]}
+            {/* User Profile / Auth Actions */}
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-1.5 pl-1.5 border-l border-slate-800">
+                <img
+                  src={currentUser.avatarUrl}
+                  alt={currentUser.fullName}
+                  className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-blue-400/40 object-cover"
+                />
+                <div className="hidden xl:block text-left">
+                  <div className="text-[11px] font-semibold text-slate-200 leading-tight">
+                    {currentUser.fullName.split(' ')[0]}
+                  </div>
+                  <div className="text-[9px] text-blue-400 font-medium leading-tight capitalize">
+                    {currentUser.role === 'class_teacher' ? 'Class Teacher' : currentUser.role.replace('_', ' ')}
+                  </div>
                 </div>
-                <div className="text-[9px] text-blue-400 font-medium leading-tight">
-                  {currentUser.role === 'class_teacher' ? 'Teacher' : currentUser.role.replace('_', ' ')}
-                </div>
+
+                {/* Sign Out Button */}
+                <button
+                  onClick={logout}
+                  className="flex items-center space-x-1 px-2 py-1 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 text-[11px] font-semibold transition-all cursor-pointer shadow-xs"
+                  title="Sign Out to Front Page Login Screen"
+                >
+                  <LogOut className="w-3 h-3 text-rose-400" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </button>
               </div>
-            </div>
+            ) : (
+              <div className="flex items-center space-x-1 pl-1.5 border-l border-slate-800 text-[11px] text-slate-400 font-medium">
+                <Lock className="w-3.5 h-3.5 text-blue-400" />
+                <span className="hidden sm:inline">Login Screen</span>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-
-      {/* Role Quick Switch Bar - Ultra Compact */}
-      <div className="bg-slate-950/95 border-t border-slate-800/80 px-2.5 py-1">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-1.5 overflow-x-auto">
-          <div className="flex items-center space-x-1 shrink-0 text-slate-400">
-            <Shield className="w-3 h-3 text-blue-400" />
-            <span className="font-bold text-slate-300 text-[10px] sm:text-[11px]">Role:</span>
-          </div>
-
-          <div className="flex items-center space-x-1 overflow-x-auto py-0.5">
-            {users
-              .filter((u) => u.role !== 'student' && u.role !== 'class_teacher')
-              .map((u) => {
-                const isSelected =
-                  currentUser.uid === u.uid ||
-                  (u.role === 'teacher' && currentUser.role === 'class_teacher');
-                let roleBadge = '';
-                let badgeColor = '';
-                switch (u.role) {
-                  case 'super_admin':
-                    roleBadge = 'Super Admin';
-                    badgeColor = 'from-rose-600 to-red-700';
-                    break;
-                  case 'principal':
-                    roleBadge = 'Principal';
-                    badgeColor = 'from-amber-500 to-orange-600';
-                    break;
-                  case 'teacher':
-                  case 'class_teacher':
-                    roleBadge = 'Teacher';
-                    badgeColor = 'from-blue-600 to-indigo-600';
-                    break;
-                  case 'parent_student':
-                  case 'parent':
-                    roleBadge = 'Parent';
-                    badgeColor = 'from-purple-600 to-pink-600';
-                    break;
-                  case 'accountant':
-                    roleBadge = 'Accountant';
-                    badgeColor = 'from-rose-600 to-red-600';
-                    break;
-                }
-
-                return (
-                  <button
-                    key={u.uid}
-                    onClick={() => setCurrentUser(u)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                      isSelected
-                        ? `bg-gradient-to-r ${badgeColor} text-white shadow-sm ring-1 ring-white/30 font-bold`
-                        : 'bg-slate-900 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                    }`}
-                  >
-                    <span>{roleBadge}</span>
-                  </button>
-                );
-              })}
-          </div>
-
-          {/* Device Frame selector if mobile view is chosen */}
-          {viewMode === 'mobile' && (
-            <div className="flex items-center space-x-0.5 text-xs text-slate-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 shrink-0">
-              <button
-                onClick={() => setDeviceType('iphone')}
-                className={`px-1 py-0.2 rounded text-[10px] ${
-                  deviceType === 'iphone' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                iPhone
-              </button>
-              <button
-                onClick={() => setDeviceType('pixel')}
-                className={`px-1 py-0.2 rounded text-[10px] ${
-                  deviceType === 'pixel' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Pixel
-              </button>
-              <button
-                onClick={() => setDeviceType('ipad')}
-                className={`px-1 py-0.2 rounded text-[10px] ${
-                  deviceType === 'ipad' ? 'bg-blue-600 text-white font-bold' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                iPad
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
