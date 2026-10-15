@@ -3,20 +3,21 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:edupulse_sms/core/constants/app_constants.dart';
-import 'package:edupulse_sms/core/widgets/role_switcher_bar.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 
-/// Models matching the Web Preview App Super Admin Data Schemas
+/// Staff Credential Model matching the React Preview App Data Schema
 class StaffCredentialItem {
   final String id;
   final String fullName;
-  final UserRole role;
+  final String role; // 'principal', 'teacher', 'class_teacher', 'accountant', 'peon', 'maid', 'security_guard', 'driver'
+  final String roleTitle; // 'Principal', 'Subject Teacher', 'Class Teacher', etc.
   final String email;
   final String password;
   final String phoneNumber;
   final String employeeId;
   final String departmentOrClass;
   final String qualification;
+  final String avatarUrl;
   final bool isAccepted;
   final DateTime acceptedAt;
 
@@ -24,12 +25,14 @@ class StaffCredentialItem {
     required this.id,
     required this.fullName,
     required this.role,
+    required this.roleTitle,
     required this.email,
     required this.password,
     required this.phoneNumber,
     required this.employeeId,
     required this.departmentOrClass,
     required this.qualification,
+    required this.avatarUrl,
     required this.isAccepted,
     required this.acceptedAt,
   });
@@ -41,7 +44,7 @@ class StaffSalaryItem {
   final String monthYear;
   final String staffId;
   final String staffName;
-  final UserRole staffRole;
+  final String roleTitle;
   final String staffDepartment;
   final String employeeId;
   final double baseSalary;
@@ -61,7 +64,7 @@ class StaffSalaryItem {
     required this.monthYear,
     required this.staffId,
     required this.staffName,
-    required this.staffRole,
+    required this.roleTitle,
     required this.staffDepartment,
     required this.employeeId,
     required this.baseSalary,
@@ -104,16 +107,16 @@ class StaffDirectiveItem {
 class StaffActivityLogItem {
   final String id;
   final String staffName;
-  final UserRole role;
+  final String roleTitle;
   final String action;
-  final String category; // 'attendance', 'academic', 'finance', 'administration', 'communication'
+  final String category; // 'attendance', 'academic', 'finance', 'administration'
   final String timeAgo;
-  final String status; // 'completed', 'in_progress', 'flagged'
+  final String status; // 'completed', 'in_progress'
 
   const StaffActivityLogItem({
     required this.id,
     required this.staffName,
-    required this.role,
+    required this.roleTitle,
     required this.action,
     required this.category,
     required this.timeAgo,
@@ -152,76 +155,144 @@ class SuperAdminDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _SuperAdminDashboardScreenState
-    extends ConsumerState<SuperAdminDashboardScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+    extends ConsumerState<SuperAdminDashboardScreen> {
+  // Active Tab: 'roster', 'salary', 'activities', 'directives', 'communication', 'rbac'
+  String _activeTab = 'roster';
 
-  // 1. Staff Credentials List
+  // 1. Exactly the 8 Staff Credentials matching the Preview App (Screenshot & store.ts)
   final List<StaffCredentialItem> _credentials = [
     StaffCredentialItem(
       id: 'CRED_PRIN_01',
-      fullName: 'Dr. Rajesh Sharma',
-      role: UserRole.principal,
-      email: 'principal@edupulse.org',
-      password: 'Principal@Edu2026!',
+      fullName: 'Dr. Alok Verma',
+      role: 'principal',
+      roleTitle: 'Principal',
+      email: 'principal@edupulse.edu',
+      password: 'Principal@Edu2026',
       phoneNumber: '+91 98765 43210',
       employeeId: 'EMP-PRIN-001',
-      departmentOrClass: 'Head of School & Administration',
-      qualification: 'Ph.D in Education, M.Ed',
+      departmentOrClass: 'Head of School / Administration',
+      qualification: 'Ph.D in Educational Leadership, M.Ed',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       isAccepted: true,
       acceptedAt: DateTime.now().subtract(const Duration(days: 45)),
     ),
     StaffCredentialItem(
       id: 'CRED_TCH_01',
-      fullName: 'Mrs. Anjali Verma',
-      role: UserRole.teacher,
-      email: 'teacher@edupulse.org',
-      password: 'Teacher@Physics2026!',
+      fullName: 'Dr. Ananya Sen',
+      role: 'teacher',
+      roleTitle: 'Subject Teacher',
+      email: 'ananya.sen@edupulse.edu',
+      password: 'Teacher@Physics2026',
       phoneNumber: '+91 98112 77889',
       employeeId: 'EMP-TCH-102',
-      departmentOrClass: 'Senior Physics & Science Labs',
-      qualification: 'M.Sc Physics, B.Ed',
+      departmentOrClass: 'Senior Physics & Mathematics',
+      qualification: 'M.Sc Physics, B.Ed, Ph.D',
+      avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
       isAccepted: true,
       acceptedAt: DateTime.now().subtract(const Duration(days: 30)),
     ),
     StaffCredentialItem(
       id: 'CRED_CT_01',
       fullName: 'Ms. Priya Sharma',
-      role: UserRole.classTeacher,
-      email: 'classteacher@edupulse.org',
-      password: 'ClassTeacher@11A!',
+      role: 'class_teacher',
+      roleTitle: 'Class Teacher',
+      email: 'priya.sharma@edupulse.edu',
+      password: 'ClassTeacher@11A',
       phoneNumber: '+91 98112 23344',
       employeeId: 'EMP-CT-204',
-      departmentOrClass: 'Class 10-A In-Charge & English Dept.',
-      qualification: 'M.A English, B.Ed',
+      departmentOrClass: 'Class 11-A In-Charge & Nursery Supervisor',
+      qualification: 'M.A English, B.Ed, Early Childhood Dip.',
+      avatarUrl: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?w=150&auto=format&fit=crop&q=80',
       isAccepted: true,
       acceptedAt: DateTime.now().subtract(const Duration(days: 20)),
     ),
     StaffCredentialItem(
       id: 'CRED_ACC_01',
-      fullName: 'Mr. Sunil Gupta',
-      role: UserRole.accountant,
-      email: 'accountant@edupulse.org',
-      password: 'Accountant@Bursar2026!',
+      fullName: 'Mr. Vikram Goel',
+      role: 'accountant',
+      roleTitle: 'Accountant',
+      email: 'vikram.goel@edupulse.edu',
+      password: 'Accountant@Bursar2026',
       phoneNumber: '+91 97654 32109',
       employeeId: 'EMP-ACC-301',
-      departmentOrClass: 'Accounts Desk & Fee Bursar',
-      qualification: 'M.Com, CA-Inter',
+      departmentOrClass: 'Finance, Bursar & Fee Collection Desk',
+      qualification: 'M.Com, Chartered Accountant (Inter)',
+      avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
       isAccepted: true,
       acceptedAt: DateTime.now().subtract(const Duration(days: 15)),
     ),
+    StaffCredentialItem(
+      id: 'CRED_PEON_01',
+      fullName: 'Ramesh Kumar',
+      role: 'peon',
+      roleTitle: 'Peon / Attendant',
+      email: 'ramesh.kumar@edupulse.edu',
+      password: 'Peon@Edu2026',
+      phoneNumber: '+91 98450 11223',
+      employeeId: 'EMP-PEON-001',
+      departmentOrClass: 'Office Attendant & Bell Operations',
+      qualification: 'Secondary (10th Pass), First Aid Certified',
+      avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      isAccepted: true,
+      acceptedAt: DateTime.now().subtract(const Duration(days: 60)),
+    ),
+    StaffCredentialItem(
+      id: 'CRED_MAID_01',
+      fullName: 'Sunita Devi',
+      role: 'maid',
+      roleTitle: 'Maid / Caretaker',
+      email: 'sunita.devi@edupulse.edu',
+      password: 'Maid@Edu2026',
+      phoneNumber: '+91 98711 44556',
+      employeeId: 'EMP-MAID-001',
+      departmentOrClass: 'Sanitation & Early Childhood Care',
+      qualification: 'Middle School, Childcare Trained',
+      avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+      isAccepted: true,
+      acceptedAt: DateTime.now().subtract(const Duration(days: 50)),
+    ),
+    StaffCredentialItem(
+      id: 'CRED_SEC_01',
+      fullName: 'Baldev Singh',
+      role: 'security_guard',
+      roleTitle: 'Security Guard',
+      email: 'baldev.singh@edupulse.edu',
+      password: 'Guard@Edu2026',
+      phoneNumber: '+91 98223 66778',
+      employeeId: 'EMP-SEC-001',
+      departmentOrClass: 'Campus Safety & Gate Verification',
+      qualification: 'Ex-Serviceman, Security Badge #402',
+      avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+      isAccepted: true,
+      acceptedAt: DateTime.now().subtract(const Duration(days: 40)),
+    ),
+    StaffCredentialItem(
+      id: 'CRED_DRV_01',
+      fullName: 'Rajesh Yadav',
+      role: 'driver',
+      roleTitle: 'Driver / Transport',
+      email: 'rajesh.yadav@edupulse.edu',
+      password: 'Driver@Edu2026',
+      phoneNumber: '+91 98334 99001',
+      employeeId: 'EMP-DRV-001',
+      departmentOrClass: 'Bus Route 12 & Student Logistics',
+      qualification: 'Heavy Vehicle Commercial License',
+      avatarUrl: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+      isAccepted: true,
+      acceptedAt: DateTime.now().subtract(const Duration(days: 35)),
+    ),
   ];
 
-  // 2. Staff Salary Payments
+  // 2. Staff Salary Payments (8 records)
   final List<StaffSalaryItem> _salaries = [
-    StaffSalaryItem(
+    const StaffSalaryItem(
       id: 'SAL_001',
       paymentDate: '2026-10-01',
       monthYear: 'October 2026',
       staffId: 'CRED_PRIN_01',
-      staffName: 'Dr. Rajesh Sharma',
-      staffRole: UserRole.principal,
-      staffDepartment: 'Head of School & Administration',
+      staffName: 'Dr. Alok Verma',
+      roleTitle: 'Principal',
+      staffDepartment: 'Head of School / Administration',
       employeeId: 'EMP-PRIN-001',
       baseSalary: 125000,
       bonusOrAllowance: 10000,
@@ -234,14 +305,14 @@ class _SuperAdminDashboardScreenState
       status: 'paid',
       receiptVoucherNumber: 'VCH-OCT-2026-001',
     ),
-    StaffSalaryItem(
+    const StaffSalaryItem(
       id: 'SAL_002',
       paymentDate: '2026-10-01',
       monthYear: 'October 2026',
       staffId: 'CRED_TCH_01',
-      staffName: 'Mrs. Anjali Verma',
-      staffRole: UserRole.teacher,
-      staffDepartment: 'Senior Physics & Science Labs',
+      staffName: 'Dr. Ananya Sen',
+      roleTitle: 'Subject Teacher',
+      staffDepartment: 'Senior Physics & Mathematics',
       employeeId: 'EMP-TCH-102',
       baseSalary: 65000,
       bonusOrAllowance: 3000,
@@ -254,14 +325,14 @@ class _SuperAdminDashboardScreenState
       status: 'paid',
       receiptVoucherNumber: 'VCH-OCT-2026-002',
     ),
-    StaffSalaryItem(
+    const StaffSalaryItem(
       id: 'SAL_003',
       paymentDate: '2026-10-01',
       monthYear: 'October 2026',
       staffId: 'CRED_CT_01',
       staffName: 'Ms. Priya Sharma',
-      staffRole: UserRole.classTeacher,
-      staffDepartment: 'Class 10-A In-Charge & English Dept.',
+      roleTitle: 'Class Teacher',
+      staffDepartment: 'Class 11-A In-Charge & Nursery Supervisor',
       employeeId: 'EMP-CT-204',
       baseSalary: 55000,
       bonusOrAllowance: 2500,
@@ -274,14 +345,14 @@ class _SuperAdminDashboardScreenState
       status: 'paid',
       receiptVoucherNumber: 'VCH-OCT-2026-003',
     ),
-    StaffSalaryItem(
+    const StaffSalaryItem(
       id: 'SAL_004',
       paymentDate: '2026-10-01',
       monthYear: 'October 2026',
       staffId: 'CRED_ACC_01',
-      staffName: 'Mr. Sunil Gupta',
-      staffRole: UserRole.accountant,
-      staffDepartment: 'Accounts Desk & Fee Bursar',
+      staffName: 'Mr. Vikram Goel',
+      roleTitle: 'Accountant',
+      staffDepartment: 'Finance, Bursar & Fee Collection Desk',
       employeeId: 'EMP-ACC-301',
       baseSalary: 48000,
       bonusOrAllowance: 2000,
@@ -294,9 +365,89 @@ class _SuperAdminDashboardScreenState
       status: 'paid',
       receiptVoucherNumber: 'VCH-OCT-2026-004',
     ),
+    const StaffSalaryItem(
+      id: 'SAL_005',
+      paymentDate: '2026-10-01',
+      monthYear: 'October 2026',
+      staffId: 'CRED_PEON_01',
+      staffName: 'Ramesh Kumar',
+      roleTitle: 'Peon / Attendant',
+      staffDepartment: 'Office Attendant & Bell Operations',
+      employeeId: 'EMP-PEON-001',
+      baseSalary: 18000,
+      bonusOrAllowance: 1000,
+      deductions: 1000,
+      netAmountPaid: 18000,
+      paymentMode: 'Cash Voucher',
+      transactionRef: 'CSH-VCH-8801',
+      remarks: 'Office attendant wage voucher for October',
+      disbursedBy: 'Super Admin Trustee',
+      status: 'paid',
+      receiptVoucherNumber: 'VCH-OCT-2026-005',
+    ),
+    const StaffSalaryItem(
+      id: 'SAL_006',
+      paymentDate: '2026-10-01',
+      monthYear: 'October 2026',
+      staffId: 'CRED_MAID_01',
+      staffName: 'Sunita Devi',
+      roleTitle: 'Maid / Caretaker',
+      staffDepartment: 'Sanitation & Early Childhood Care',
+      employeeId: 'EMP-MAID-001',
+      baseSalary: 16500,
+      bonusOrAllowance: 1000,
+      deductions: 1000,
+      netAmountPaid: 16500,
+      paymentMode: 'Cash Voucher',
+      transactionRef: 'CSH-VCH-8802',
+      remarks: 'Sanitation & nursery hygiene monthly wage',
+      disbursedBy: 'Super Admin Trustee',
+      status: 'paid',
+      receiptVoucherNumber: 'VCH-OCT-2026-006',
+    ),
+    const StaffSalaryItem(
+      id: 'SAL_007',
+      paymentDate: '2026-10-01',
+      monthYear: 'October 2026',
+      staffId: 'CRED_SEC_01',
+      staffName: 'Baldev Singh',
+      roleTitle: 'Security Guard',
+      staffDepartment: 'Campus Safety & Gate Verification',
+      employeeId: 'EMP-SEC-001',
+      baseSalary: 20000,
+      bonusOrAllowance: 1500,
+      deductions: 1500,
+      netAmountPaid: 20000,
+      paymentMode: 'UPI Auto-Disburse',
+      transactionRef: 'UPI-PNB-661204',
+      remarks: 'Campus gate security shift compensation',
+      disbursedBy: 'Super Admin Trustee',
+      status: 'paid',
+      receiptVoucherNumber: 'VCH-OCT-2026-007',
+    ),
+    const StaffSalaryItem(
+      id: 'SAL_008',
+      paymentDate: '2026-10-01',
+      monthYear: 'October 2026',
+      staffId: 'CRED_DRV_01',
+      staffName: 'Rajesh Yadav',
+      roleTitle: 'Driver / Transport',
+      staffDepartment: 'Bus Route 12 & Student Logistics',
+      employeeId: 'EMP-DRV-001',
+      baseSalary: 22000,
+      bonusOrAllowance: 1500,
+      deductions: 1500,
+      netAmountPaid: 22000,
+      paymentMode: 'Bank Transfer (NEFT)',
+      transactionRef: 'NEFT-SBI-440192',
+      remarks: 'Transport department bus driver compensation',
+      disbursedBy: 'Super Admin Trustee',
+      status: 'paid',
+      receiptVoucherNumber: 'VCH-OCT-2026-008',
+    ),
   ];
 
-  // 3. Official Directives
+  // 3. Official Directives (4 records)
   final List<StaffDirectiveItem> _directives = [
     StaffDirectiveItem(
       id: 'DIR_001',
@@ -334,60 +485,81 @@ class _SuperAdminDashboardScreenState
       issuedAt: '2026-10-08',
       status: 'completed',
     ),
+    StaffDirectiveItem(
+      id: 'DIR_004',
+      title: 'Pre-Primary Nutrition, Hygiene & Sensory Play Audit',
+      instructions:
+          'Class teachers & nursery caretakers to audit playground toys sanitation and student allergy registers.',
+      targetStaffName: 'Nursery & Pre-Primary Staff',
+      priority: 'normal',
+      category: 'academic',
+      deadline: '2026-10-28',
+      issuedAt: '2026-10-05',
+      status: 'pending',
+    ),
   ];
 
-  // 4. Institutional Activities Log
+  // 4. Institutional Activities Log (6 records)
   final List<StaffActivityLogItem> _activities = [
-    StaffActivityLogItem(
+    const StaffActivityLogItem(
       id: 'ACT_01',
-      staffName: 'Dr. Rajesh Sharma',
-      role: UserRole.principal,
-      action: 'Approved Class 10-A revised science and lab practical timetable.',
+      staffName: 'Dr. Ananya Sen',
+      roleTitle: 'Subject Teacher',
+      action: 'Completed Period 3 Physics Lab Optical Experiment with 24 student notebooks.',
       category: 'academic',
       timeAgo: '12 mins ago',
       status: 'completed',
     ),
-    StaffActivityLogItem(
+    const StaffActivityLogItem(
       id: 'ACT_02',
-      staffName: 'Mr. Sunil Gupta',
-      role: UserRole.accountant,
-      action: 'Reconciled ₹2,45,000 in Q3 bus transport and tuition fee payments.',
+      staffName: 'Mr. Vikram Goel',
+      roleTitle: 'Accountant',
+      action: 'Reconciled ₹24,500 daily counter fee collection against bank deposit scroll.',
       category: 'finance',
       timeAgo: '45 mins ago',
       status: 'completed',
     ),
-    StaffActivityLogItem(
+    const StaffActivityLogItem(
       id: 'ACT_03',
-      staffName: 'Mrs. Anjali Verma',
-      role: UserRole.teacher,
-      action: 'Published Unit Test 2 Physics marks and laboratory assignment rubrics.',
+      staffName: 'Ms. Priya Sharma',
+      roleTitle: 'Class Teacher',
+      action: 'Updated Pre-Primary Nutrition & Rest Observation Sheet for Nursery Section A.',
       category: 'academic',
       timeAgo: '2 hours ago',
       status: 'completed',
     ),
-    StaffActivityLogItem(
+    const StaffActivityLogItem(
       id: 'ACT_04',
-      staffName: 'Ms. Priya Sharma',
-      role: UserRole.classTeacher,
-      action: 'Submitted biometric and RFID morning attendance muster with 96.4% present.',
-      category: 'attendance',
+      staffName: 'Dr. Alok Verma',
+      roleTitle: 'Principal',
+      action: 'Audited Weekly Faculty Absence & Substitution Roster without instructional disruption.',
+      category: 'administration',
       timeAgo: '4 hours ago',
       status: 'completed',
     ),
-    StaffActivityLogItem(
+    const StaffActivityLogItem(
       id: 'ACT_05',
+      staffName: 'Baldev Singh',
+      roleTitle: 'Security Guard',
+      action: 'Logged afternoon bus departure convoy and visitor identity verification check.',
+      category: 'attendance',
+      timeAgo: '6 hours ago',
+      status: 'completed',
+    ),
+    const StaffActivityLogItem(
+      id: 'ACT_06',
       staffName: 'Super Admin Trustee',
-      role: UserRole.superAdmin,
-      action: 'Disbursed October 2026 payroll settlements for authorized faculty.',
+      roleTitle: 'Super Admin',
+      action: 'Disbursed October 2026 payroll settlements for all 8 authorized staff members.',
       category: 'administration',
       timeAgo: '1 day ago',
       status: 'completed',
     ),
   ];
 
-  // 5. Staff Communication Messages
+  // 5. Staff Communication Messages (3 records)
   final List<StaffCommMessageItem> _commMessages = [
-    StaffCommMessageItem(
+    const StaffCommMessageItem(
       id: 'MSG_01',
       senderName: 'Super Admin Trustee Office',
       recipientName: 'All Teaching & Administrative Staff',
@@ -398,9 +570,9 @@ class _SuperAdminDashboardScreenState
       priority: 'urgent',
       isRead: false,
     ),
-    StaffCommMessageItem(
+    const StaffCommMessageItem(
       id: 'MSG_02',
-      senderName: 'Dr. Rajesh Sharma (Principal)',
+      senderName: 'Dr. Alok Verma (Principal)',
       recipientName: 'Super Admin Trustee Office',
       message:
           'Board compliance inspection report has been prepared and uploaded to the governance documents vault.',
@@ -409,9 +581,9 @@ class _SuperAdminDashboardScreenState
       priority: 'normal',
       isRead: true,
     ),
-    StaffCommMessageItem(
+    const StaffCommMessageItem(
       id: 'MSG_03',
-      senderName: 'Mr. Sunil Gupta (Accountant)',
+      senderName: 'Mr. Vikram Goel (Accountant)',
       recipientName: 'Super Admin Trustee Office',
       message:
           'Payment gateway settlement report for October batch is ready for your sign-off and auditing.',
@@ -425,12 +597,11 @@ class _SuperAdminDashboardScreenState
   // Filters & State
   String _rosterFilter = 'all';
   String _rosterSearch = '';
-  String _activityFilter = 'all';
   final Set<String> _revealedPasswords = {};
 
   // Form Controllers for New Staff Credentials
   final _formKey = GlobalKey<FormState>();
-  UserRole _selectedRole = UserRole.principal;
+  String _selectedNewRole = 'principal';
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -439,7 +610,7 @@ class _SuperAdminDashboardScreenState
   final _deptController = TextEditingController(text: 'Head of School / Administration');
   final _qualController = TextEditingController();
 
-  // Salary Disbursement Form State
+  // Salary Form State
   String _selectedSalaryStaffId = 'CRED_PRIN_01';
   final _salaryBaseController = TextEditingController(text: '125000');
   final _salaryBonusController = TextEditingController(text: '5000');
@@ -448,7 +619,7 @@ class _SuperAdminDashboardScreenState
   final _salaryRemarksController = TextEditingController(text: 'Monthly salary and wage settlement');
   String _salaryPaymentMode = 'UPI';
 
-  // New Directive Form State
+  // Directive Form State
   final _directiveTitleController = TextEditingController();
   final _directiveInstructionsController = TextEditingController();
   String _directivePriority = 'urgent';
@@ -457,19 +628,10 @@ class _SuperAdminDashboardScreenState
 
   // Message Form State
   final _commMessageController = TextEditingController();
-  String _commPriority = 'normal';
   String _commTarget = 'All Staff';
 
   @override
-  void initState() {
-    super.initState();
-    // 6 Full Tabs Matching Preview App
-    _tabController = TabController(length: 6, vsync: this);
-  }
-
-  @override
   void dispose() {
-    _tabController.dispose();
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -490,40 +652,56 @@ class _SuperAdminDashboardScreenState
     super.dispose();
   }
 
-  void _onRoleSelected(UserRole role) {
+  void _onRoleSelected(String role) {
     setState(() {
-      _selectedRole = role;
+      _selectedNewRole = role;
       switch (role) {
-        case UserRole.principal:
-          _empIdController.text = 'EMP-PRIN-00${_credentials.where((c) => c.role == UserRole.principal).length + 1}';
+        case 'principal':
+          _empIdController.text = 'EMP-PRIN-002';
           _deptController.text = 'Head of School / Administration';
           break;
-        case UserRole.teacher:
-          _empIdController.text = 'EMP-TCH-${100 + _credentials.where((c) => c.role == UserRole.teacher).length + 1}';
+        case 'teacher':
+          _empIdController.text = 'EMP-TCH-103';
           _deptController.text = 'Senior Faculty (Mathematics & Physics)';
           break;
-        case UserRole.classTeacher:
-          _empIdController.text = 'EMP-CT-${200 + _credentials.where((c) => c.role == UserRole.classTeacher).length + 1}';
+        case 'class_teacher':
+          _empIdController.text = 'EMP-CT-205';
           _deptController.text = 'Class 11-A In-Charge & Student Mentor';
           break;
-        case UserRole.accountant:
-          _empIdController.text = 'EMP-ACC-${300 + _credentials.where((c) => c.role == UserRole.accountant).length + 1}';
+        case 'accountant':
+          _empIdController.text = 'EMP-ACC-302';
           _deptController.text = 'Finance & Fee Collection Desk';
           break;
-        default:
+        case 'peon':
+          _empIdController.text = 'EMP-PEON-002';
+          _deptController.text = 'Office Attendant & Bell Operations';
+          break;
+        case 'maid':
+          _empIdController.text = 'EMP-MAID-002';
+          _deptController.text = 'Housekeeping & Nursery Care';
+          break;
+        case 'security_guard':
+          _empIdController.text = 'EMP-SEC-002';
+          _deptController.text = 'Campus Security & Gate Safety';
+          break;
+        case 'driver':
+          _empIdController.text = 'EMP-DRV-002';
+          _deptController.text = 'Transport Dept / Bus Fleet';
           break;
       }
     });
   }
 
   void _generateStrongPassword() {
-    final prefix = _selectedRole == UserRole.principal
+    final prefix = _selectedNewRole == 'principal'
         ? 'Prin'
-        : _selectedRole == UserRole.classTeacher
+        : _selectedNewRole == 'class_teacher'
             ? 'ClsTch'
-            : _selectedRole == UserRole.teacher
+            : _selectedNewRole == 'teacher'
                 ? 'Teach'
-                : 'Acc';
+                : _selectedNewRole == 'accountant'
+                    ? 'Acc'
+                    : 'Stf';
     final rand = 1000 + (DateTime.now().millisecond * 9);
     setState(() {
       _passwordController.text = '$prefix@Edu$rand!';
@@ -533,10 +711,21 @@ class _SuperAdminDashboardScreenState
   void _acceptAndSaveCredential() {
     if (!_formKey.currentState!.validate()) return;
 
+    String roleTitle = 'Faculty';
+    if (_selectedNewRole == 'principal') roleTitle = 'Principal';
+    if (_selectedNewRole == 'teacher') roleTitle = 'Subject Teacher';
+    if (_selectedNewRole == 'class_teacher') roleTitle = 'Class Teacher';
+    if (_selectedNewRole == 'accountant') roleTitle = 'Accountant';
+    if (_selectedNewRole == 'peon') roleTitle = 'Peon / Attendant';
+    if (_selectedNewRole == 'maid') roleTitle = 'Maid / Caretaker';
+    if (_selectedNewRole == 'security_guard') roleTitle = 'Security Guard';
+    if (_selectedNewRole == 'driver') roleTitle = 'Driver / Transport';
+
     final newCred = StaffCredentialItem(
       id: 'CRED_${DateTime.now().millisecondsSinceEpoch}',
       fullName: _nameController.text.trim(),
-      role: _selectedRole,
+      role: _selectedNewRole,
+      roleTitle: roleTitle,
       email: _emailController.text.trim().toLowerCase(),
       password: _passwordController.text.trim(),
       phoneNumber: _phoneController.text.trim().isEmpty
@@ -544,11 +733,12 @@ class _SuperAdminDashboardScreenState
           : _phoneController.text.trim(),
       employeeId: _empIdController.text.trim(),
       departmentOrClass: _deptController.text.trim().isEmpty
-          ? 'School Faculty'
+          ? 'School Staff'
           : _deptController.text.trim(),
       qualification: _qualController.text.trim().isEmpty
           ? 'Qualified Specialist'
           : _qualController.text.trim(),
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
       isAccepted: true,
       acceptedAt: DateTime.now(),
     );
@@ -567,9 +757,9 @@ class _SuperAdminDashboardScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Login credentials authorized for ${newCred.fullName} (${newCred.role.displayName})!',
+          'Login credentials authorized for ${newCred.fullName} ($roleTitle)!',
         ),
-        backgroundColor: const Color(0xFF059669),
+        backgroundColor: const Color(0xFFE11D48),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -581,8 +771,8 @@ class _SuperAdminDashboardScreenState
     );
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Credentials for ${item.fullName} copied to clipboard!'),
-        backgroundColor: const Color(0xFF1E293B),
+        content: Text('Credentials for ${item.fullName} copied!'),
+        backgroundColor: const Color(0xFF0F172A),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -618,10 +808,10 @@ class _SuperAdminDashboardScreenState
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.person_add_alt_1_rounded, color: Color(0xFF881337), size: 24),
+                          Icon(Icons.vpn_key_rounded, color: Color(0xFFE11D48), size: 22),
                           SizedBox(width: 8),
                           Text(
-                            'Authorize New Staff',
+                            'Staff Login Credentials',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -637,16 +827,20 @@ class _SuperAdminDashboardScreenState
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Text('Select Designation / Role *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const Text('Select Role / Designation *', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _buildModalRoleChip(UserRole.principal, 'Principal', Icons.admin_panel_settings_rounded, setModalState),
-                      _buildModalRoleChip(UserRole.teacher, 'Teacher', Icons.co_present_rounded, setModalState),
-                      _buildModalRoleChip(UserRole.classTeacher, 'Class Teacher', Icons.assignment_ind_rounded, setModalState),
-                      _buildModalRoleChip(UserRole.accountant, 'Accountant', Icons.account_balance_wallet_rounded, setModalState),
+                      _buildModalRoleChoice('principal', 'Principal', setModalState),
+                      _buildModalRoleChoice('teacher', 'Teacher', setModalState),
+                      _buildModalRoleChoice('class_teacher', 'Class Teacher', setModalState),
+                      _buildModalRoleChoice('accountant', 'Accountant', setModalState),
+                      _buildModalRoleChoice('peon', 'Peon', setModalState),
+                      _buildModalRoleChoice('maid', 'Maid', setModalState),
+                      _buildModalRoleChoice('security_guard', 'Security', setModalState),
+                      _buildModalRoleChoice('driver', 'Driver', setModalState),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -693,7 +887,7 @@ class _SuperAdminDashboardScreenState
                         icon: const Icon(Icons.auto_fix_high_rounded, size: 16),
                         label: const Text('Generate'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF881337),
+                          backgroundColor: const Color(0xFFE11D48),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                         ),
@@ -729,7 +923,7 @@ class _SuperAdminDashboardScreenState
                   TextFormField(
                     controller: _deptController,
                     decoration: const InputDecoration(
-                      labelText: 'Department / Assigned Classes',
+                      labelText: 'Department / Assigned Section',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -740,7 +934,7 @@ class _SuperAdminDashboardScreenState
                     child: ElevatedButton(
                       onPressed: _acceptAndSaveCredential,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF059669),
+                        backgroundColor: const Color(0xFFE11D48),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
@@ -756,19 +950,19 @@ class _SuperAdminDashboardScreenState
     );
   }
 
-  Widget _buildModalRoleChip(UserRole role, String label, IconData icon, StateSetter setModalState) {
-    final isSelected = _selectedRole == role;
+  Widget _buildModalRoleChoice(String roleKey, String label, StateSetter setModalState) {
+    final isSelected = _selectedNewRole == roleKey;
     return ChoiceChip(
-      avatar: Icon(icon, size: 16, color: isSelected ? Colors.white : const Color(0xFF881337)),
-      label: Text(label, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF1E293B))),
+      label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : const Color(0xFF1E293B))),
       selected: isSelected,
-      selectedColor: const Color(0xFF881337),
+      selectedColor: const Color(0xFFE11D48),
       backgroundColor: const Color(0xFFF1F5F9),
       onSelected: (_) {
         setModalState(() {
-          _onRoleSelected(role);
+          _onRoleSelected(roleKey);
         });
       },
+      showCheckmark: false,
     );
   }
 
@@ -808,7 +1002,7 @@ class _SuperAdminDashboardScreenState
                           Icon(Icons.payments_rounded, color: Color(0xFF059669), size: 24),
                           SizedBox(width: 8),
                           Text(
-                            'Disburse Monthly Salary',
+                            'Disburse Staff Fees / Salary',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -832,7 +1026,7 @@ class _SuperAdminDashboardScreenState
                     items: _credentials.map((c) {
                       return DropdownMenuItem(
                         value: c.id,
-                        child: Text('${c.fullName} (${c.role.displayName.split('(')[0].trim()})'),
+                        child: Text('${c.fullName} (${c.roleTitle})'),
                       );
                     }).toList(),
                     onChanged: (val) {
@@ -840,15 +1034,14 @@ class _SuperAdminDashboardScreenState
                         final cred = _credentials.firstWhere((c) => c.id == val);
                         setModalState(() {
                           _selectedSalaryStaffId = val;
-                          if (cred.role == UserRole.principal) {
-                            _salaryBaseController.text = '125000';
-                          } else if (cred.role == UserRole.teacher) {
-                            _salaryBaseController.text = '65000';
-                          } else if (cred.role == UserRole.classTeacher) {
-                            _salaryBaseController.text = '55000';
-                          } else if (cred.role == UserRole.accountant) {
-                            _salaryBaseController.text = '48000';
-                          }
+                          if (cred.role == 'principal') _salaryBaseController.text = '125000';
+                          else if (cred.role == 'teacher') _salaryBaseController.text = '65000';
+                          else if (cred.role == 'class_teacher') _salaryBaseController.text = '55000';
+                          else if (cred.role == 'accountant') _salaryBaseController.text = '48000';
+                          else if (cred.role == 'peon') _salaryBaseController.text = '18000';
+                          else if (cred.role == 'maid') _salaryBaseController.text = '16500';
+                          else if (cred.role == 'security_guard') _salaryBaseController.text = '20000';
+                          else if (cred.role == 'driver') _salaryBaseController.text = '22000';
                         });
                       }
                     },
@@ -885,7 +1078,6 @@ class _SuperAdminDashboardScreenState
                     ],
                   ),
                   const SizedBox(height: 14),
-                  // Net Calculation Card
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -952,7 +1144,7 @@ class _SuperAdminDashboardScreenState
                           monthYear: 'October 2026',
                           staffId: cred.id,
                           staffName: cred.fullName,
-                          staffRole: cred.role,
+                          roleTitle: cred.roleTitle,
                           staffDepartment: cred.departmentOrClass,
                           employeeId: cred.employeeId,
                           baseSalary: base.toDouble(),
@@ -993,163 +1185,6 @@ class _SuperAdminDashboardScreenState
     );
   }
 
-  void _showIssueDirectiveDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setModalState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: EdgeInsets.only(
-            top: 20,
-            left: 20,
-            right: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.campaign_rounded, color: Color(0xFF881337), size: 24),
-                        SizedBox(width: 8),
-                        Text(
-                          'Issue Official Directive',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close_rounded),
-                      onPressed: () => Navigator.of(ctx).pop(),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _directiveTitleController,
-                  decoration: const InputDecoration(labelText: 'Directive Subject / Title *', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _directiveInstructionsController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Instructions & Action Points *', border: OutlineInputBorder()),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _directivePriority,
-                        decoration: const InputDecoration(labelText: 'Priority', border: OutlineInputBorder()),
-                        items: const [
-                          DropdownMenuItem(value: 'urgent', child: Text('Urgent (Immediate Action)')),
-                          DropdownMenuItem(value: 'high', child: Text('High Priority')),
-                          DropdownMenuItem(value: 'normal', child: Text('Standard')),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) setModalState(() => _directivePriority = v);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _directiveCategory,
-                        decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                        items: const [
-                          DropdownMenuItem(value: 'academic', child: Text('Academic')),
-                          DropdownMenuItem(value: 'administrative', child: Text('Administrative')),
-                          DropdownMenuItem(value: 'compliance', child: Text('Compliance & Safety')),
-                          DropdownMenuItem(value: 'finance', child: Text('Finance & Bursar')),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) setModalState(() => _directiveCategory = v);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  value: _directiveTarget,
-                  decoration: const InputDecoration(labelText: 'Target Staff Audience', border: OutlineInputBorder()),
-                  items: const [
-                    DropdownMenuItem(value: 'All Faculty & Staff', child: Text('All Faculty & Staff (Broadcast)')),
-                    DropdownMenuItem(value: 'Principal & Administration Office', child: Text('Principal & Executive Office')),
-                    DropdownMenuItem(value: 'All Subject Faculty & Mentors', child: Text('Teachers & Mentors')),
-                    DropdownMenuItem(value: 'Finance & Accounts Desk', child: Text('Accounts & Bursar')),
-                  ],
-                  onChanged: (v) {
-                    if (v != null) setModalState(() => _directiveTarget = v);
-                  },
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.send_rounded),
-                    label: const Text('Publish Directive Circular', style: TextStyle(fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF881337),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    onPressed: () {
-                      if (_directiveTitleController.text.trim().isEmpty) return;
-
-                      final newDir = StaffDirectiveItem(
-                        id: 'DIR_${DateTime.now().millisecondsSinceEpoch}',
-                        title: _directiveTitleController.text.trim(),
-                        instructions: _directiveInstructionsController.text.trim(),
-                        targetStaffName: _directiveTarget,
-                        priority: _directivePriority,
-                        category: _directiveCategory,
-                        deadline: '2026-10-30',
-                        issuedAt: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                        status: 'pending',
-                      );
-
-                      setState(() {
-                        _directives.insert(0, newDir);
-                        _directiveTitleController.clear();
-                        _directiveInstructionsController.clear();
-                      });
-
-                      Navigator.of(ctx).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Official directive published to faculty desks!'),
-                          backgroundColor: Color(0xFF881337),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showSalarySlipModal(StaffSalaryItem item) {
     showDialog(
       context: context,
@@ -1167,7 +1202,7 @@ class _SuperAdminDashboardScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Staff Name: ${item.staffName}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            Text('Designation: ${item.staffRole.displayName.split('(')[0].trim()} • ${item.employeeId}'),
+            Text('Designation: ${item.roleTitle} • ${item.employeeId}'),
             Text('Month: ${item.monthYear}'),
             const Divider(height: 20),
             Row(
@@ -1202,8 +1237,6 @@ class _SuperAdminDashboardScreenState
             const SizedBox(height: 8),
             Text('Mode: ${item.paymentMode}'),
             Text('Ref: ${item.transactionRef}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            const SizedBox(height: 6),
-            Text('Disbursed By: ${item.disbursedBy}', style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic)),
           ],
         ),
         actions: [
@@ -1211,29 +1244,25 @@ class _SuperAdminDashboardScreenState
             onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('Close'),
           ),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.share_rounded, size: 16),
-            label: const Text('Share Receipt'),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF059669), foregroundColor: Colors.white),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Salary slip ${item.receiptVoucherNumber} prepared for sharing.')),
-              );
-            },
-          ),
         ],
       ),
     );
   }
 
+  void _handleTestLogin(StaffCredentialItem item) {
+    UserRole targetRole = UserRole.principal;
+    if (item.role == 'principal') targetRole = UserRole.principal;
+    else if (item.role == 'teacher') targetRole = UserRole.teacher;
+    else if (item.role == 'class_teacher') targetRole = UserRole.classTeacher;
+    else if (item.role == 'accountant') targetRole = UserRole.accountant;
+
+    ref.read(authControllerProvider.notifier).loginAsDemoRole(targetRole);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authControllerProvider);
-    final user = authState.user;
-
     final filteredCredentials = _credentials.where((c) {
-      if (_rosterFilter != 'all' && c.role.idName != _rosterFilter && c.role.name != _rosterFilter) {
+      if (_rosterFilter != 'all' && c.role != _rosterFilter) {
         return false;
       }
       if (_rosterSearch.isNotEmpty) {
@@ -1248,887 +1277,679 @@ class _SuperAdminDashboardScreenState
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF881337), // Rose/Burgundy Super Admin header
+        backgroundColor: const Color(0xFF0F172A), // Dark slate header matching top bar
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Column(
+        title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Super Admin Console',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
-              user?.fullName ?? 'Shri Vikramaditya Roy (Board Trustee)',
-              style: const TextStyle(fontSize: 12, color: Color(0xFFFECDD3)),
+              'Shri Vikramaditya Roy (Board Trustee)',
+              style: TextStyle(fontSize: 11, color: Color(0xFFFDA4AF)),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout_rounded),
+            icon: const Icon(Icons.logout_rounded, color: Colors.white70),
             tooltip: 'Sign Out to Login',
             onPressed: () {
               ref.read(authControllerProvider.notifier).signOut();
             },
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelColor: Colors.white,
-          unselectedLabelColor: const Color(0xFFFECDD3),
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          tabs: [
-            Tab(
-              icon: const Icon(Icons.vpn_key_rounded, size: 18),
-              text: 'Credentials & Roster (${_credentials.length})',
-            ),
-            Tab(
-              icon: const Icon(Icons.payments_rounded, size: 18),
-              text: 'Salary & Payroll (${_salaries.length})',
-            ),
-            Tab(
-              icon: const Icon(Icons.campaign_rounded, size: 18),
-              text: 'Directives & Orders (${_directives.length})',
-            ),
-            Tab(
-              icon: const Icon(Icons.timeline_rounded, size: 18),
-              text: 'Activity Audit Log (${_activities.length})',
-            ),
-            Tab(
-              icon: const Icon(Icons.forum_rounded, size: 18),
-              text: 'Communication Desk (${_commMessages.length})',
-            ),
-            const Tab(
-              icon: Icon(Icons.verified_user_rounded, size: 18),
-              text: 'RBAC Matrix',
-            ),
-          ],
-        ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            const RoleSwitcherBar(),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // TAB 1: CREDENTIALS & ROSTER
-                  _buildCredentialsAndRosterTab(filteredCredentials),
-
-                  // TAB 2: SALARY & PAYROLL DISBURSEMENT
-                  _buildSalaryAndPayrollTab(),
-
-                  // TAB 3: OFFICIAL DIRECTIVES & ORDERS
-                  _buildDirectivesTab(),
-
-                  // TAB 4: ACTIVITY AUDIT LOG
-                  _buildActivityAuditTab(),
-
-                  // TAB 5: COMMUNICATION & BROADCAST DESK
-                  _buildCommunicationTab(),
-
-                  // TAB 6: RBAC GOVERNANCE MATRIX
-                  _buildRbacMatrixTab(),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ==========================================
-  // TAB 1: CREDENTIALS & ROSTER
-  // ==========================================
-  Widget _buildCredentialsAndRosterTab(List<StaffCredentialItem> filteredList) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Banner with Quick Authorize Button
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF881337), Color(0xFF4C0519)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF881337).withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.security_rounded, color: Colors.white, size: 22),
-                        SizedBox(width: 8),
-                        Text(
-                          'Staff Governance Desk',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: _showAuthorizeStaffDialog,
-                      icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
-                      label: const Text('Authorize Staff'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF881337),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Authorize institutional credentials for Principal, Teacher, Class Teacher, and Accountant. Credentials synchronize directly with mobile & web dashboards.',
-                  style: TextStyle(color: Color(0xFFFEE2E2), fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Search Bar
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Search by staff name, email, or employee ID...',
-              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF64748B)),
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            onChanged: (val) {
-              setState(() {
-                _rosterSearch = val.trim();
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-
-          // Role Filter Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildFilterChip('all', 'All Staff (${_credentials.length})'),
-                const SizedBox(width: 8),
-                _buildFilterChip('principal', 'Principals'),
-                const SizedBox(width: 8),
-                _buildFilterChip('teacher', 'Teachers'),
-                const SizedBox(width: 8),
-                _buildFilterChip('class_teacher', 'Class Teachers'),
-                const SizedBox(width: 8),
-                _buildFilterChip('accountant', 'Accountants'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Staff Cards List
-          if (filteredList.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(32),
-              alignment: Alignment.center,
-              child: const Column(
-                children: [
-                  Icon(Icons.person_search_rounded, size: 48, color: Color(0xFF94A3B8)),
-                  SizedBox(height: 12),
-                  Text('No staff credentials match your filter.', style: TextStyle(color: Color(0xFF64748B))),
-                ],
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: filteredList.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final item = filteredList[index];
-                final roleColor = item.role == UserRole.principal
-                    ? const Color(0xFFB45309)
-                    : item.role == UserRole.teacher
-                        ? const Color(0xFF2563EB)
-                        : item.role == UserRole.classTeacher
-                            ? const Color(0xFF0D9488)
-                            : const Color(0xFFE11D48);
-
-                final isPasswordVisible = _revealedPasswords.contains(item.id);
-
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.02),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: roleColor.withOpacity(0.12),
-                            child: Text(
-                              item.fullName.isNotEmpty ? item.fullName[0] : 'S',
-                              style: TextStyle(color: roleColor, fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.fullName,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A)),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${item.departmentOrClass} • ${item.employeeId}',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: roleColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: roleColor.withOpacity(0.2)),
-                            ),
-                            child: Text(
-                              item.role.displayName.split('(')[0].trim(),
-                              style: TextStyle(color: roleColor, fontWeight: FontWeight.bold, fontSize: 11),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                      const SizedBox(height: 10),
-
-                      // Credentials Display Box
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(Icons.email_outlined, size: 14, color: Color(0xFF64748B)),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    item.email,
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(Icons.lock_outline, size: 14, color: Color(0xFF64748B)),
-                                const SizedBox(width: 6),
-                                Text(
-                                  isPasswordVisible ? item.password : '••••••••••••',
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                ),
-                                const Spacer(),
-                                InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      if (isPasswordVisible) {
-                                        _revealedPasswords.remove(item.id);
-                                      } else {
-                                        _revealedPasswords.add(item.id);
-                                      }
-                                    });
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                                    child: Icon(
-                                      isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-                                      size: 16,
-                                      color: const Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                InkWell(
-                                  onTap: () => _copyCredentials(item),
-                                  child: const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 4),
-                                    child: Icon(Icons.copy_rounded, size: 16, color: Color(0xFF881337)),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Quick Test Login
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton.icon(
-                          onPressed: () {
-                            ref.read(authControllerProvider.notifier).loginAsDemoRole(item.role);
-                          },
-                          icon: const Icon(Icons.login_rounded, size: 14),
-                          label: Text('Test Login as ${item.role.displayName.split('(')[0].trim()}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                          style: TextButton.styleFrom(foregroundColor: roleColor),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-
-  // ==========================================
-  // TAB 2: SALARY & PAYROLL DISBURSEMENT
-  // ==========================================
-  Widget _buildSalaryAndPayrollTab() {
-    final totalDisbursed = _salaries.fold<double>(0, (sum, s) => sum + s.netAmountPaid);
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Payroll Metric Cards
-          Row(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Total Disbursed (Oct)', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                      const SizedBox(height: 4),
-                      Text(
-                        '₹${NumberFormat('#,##,###').format(totalDisbursed)}',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Staff on Payroll', style: TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${_salaries.length} Verified',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Disburse Action Bar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Disbursed Salary Slips', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A))),
-              ElevatedButton.icon(
-                onPressed: _showDisburseSalaryDialog,
-                icon: const Icon(Icons.add_card_rounded, size: 16),
-                label: const Text('Disburse Salary'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF059669),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Salary Slips List
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _salaries.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final salary = _salaries[index];
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF059669).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Icon(Icons.receipt_rounded, color: Color(0xFF059669), size: 20),
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(salary.staffName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                                Text('${salary.employeeId} • ${salary.monthYear}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFF86EFAC)),
-                          ),
-                          child: const Text('Paid', style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 11)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Net Disbursed: ₹${NumberFormat('#,##,###').format(salary.netAmountPaid)}',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF059669))),
-                        Text(salary.paymentMode, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text('Ref: ${salary.transactionRef} • Voucher: ${salary.receiptVoucherNumber}', style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
-                    const SizedBox(height: 10),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: () => _showSalarySlipModal(salary),
-                        icon: const Icon(Icons.visibility_rounded, size: 14),
-                        label: const Text('View Salary Voucher', style: TextStyle(fontSize: 12)),
-                        style: TextButton.styleFrom(foregroundColor: const Color(0xFF059669)),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ==========================================
-  // TAB 3: OFFICIAL DIRECTIVES & ORDERS
-  // ==========================================
-  Widget _buildDirectivesTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Super Admin Orders & Directives', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F172A))),
-              ElevatedButton.icon(
-                onPressed: _showIssueDirectiveDialog,
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Issue Directive'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF881337),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _directives.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final dir = _directives[index];
-              final isUrgent = dir.priority == 'urgent';
-
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isUrgent ? const Color(0xFFFECDD3) : const Color(0xFFE2E8F0),
-                    width: isUrgent ? 1.5 : 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: isUrgent ? const Color(0xFFFFE4E6) : const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            dir.priority.toUpperCase(),
-                            style: TextStyle(
-                              color: isUrgent ? const Color(0xFFE11D48) : const Color(0xFF475569),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(dir.category.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: dir.status == 'completed' ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            dir.status == 'completed' ? 'Completed' : 'In Progress',
-                            style: TextStyle(
-                              color: dir.status == 'completed' ? const Color(0xFF15803D) : const Color(0xFFB45309),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(dir.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F172A))),
-                    const SizedBox(height: 6),
-                    Text(dir.instructions, style: const TextStyle(fontSize: 12, color: Color(0xFF475569))),
-                    const SizedBox(height: 10),
-                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Target: ${dir.targetStaffName}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                        Text('Deadline: ${dir.deadline}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF881337))),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ==========================================
-  // TAB 4: ACTIVITY AUDIT LOG
-  // ==========================================
-  Widget _buildActivityAuditTab() {
-    final filtered = _activities.where((a) {
-      if (_activityFilter == 'all') return true;
-      return a.category == _activityFilter;
-    }).toList();
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Filter Chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildActivityFilterChip('all', 'All Activities'),
-                const SizedBox(width: 8),
-                _buildActivityFilterChip('academic', 'Academic'),
-                const SizedBox(width: 8),
-                _buildActivityFilterChip('finance', 'Finance'),
-                const SizedBox(width: 8),
-                _buildActivityFilterChip('attendance', 'Attendance'),
-                const SizedBox(width: 8),
-                _buildActivityFilterChip('administration', 'Admin'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Audit Stream Cards
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final act = filtered[index];
-              return Container(
+              // =========================================================
+              // 1. TOP EXECUTIVE BANNER (EXACT MATCH WITH PREVIEW APP)
+              // =========================================================
+              Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0F172A), Color(0xFF4C0519), Color(0xFF0F172A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFF881337).withOpacity(0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF881337).withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.history_rounded, size: 18, color: Color(0xFF881337)),
-                    ),
-                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(act.staffName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-                              Text(act.timeAgo, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(act.action, style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
-                          const SizedBox(height: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
-                              borderRadius: BorderRadius.circular(4),
+                              color: const Color(0xFFF43F5E).withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFFF43F5E).withOpacity(0.3)),
                             ),
-                            child: Text(act.category.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.shield_outlined, size: 12, color: Color(0xFFFDA4AF)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Super Admin',
+                                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFFDA4AF)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Institutional Admin Console',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Staff onboarding and credential issuance.',
+                            style: TextStyle(fontSize: 11, color: Color(0xFFCBD5E1)),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
+
+                    // Right Side Action Buttons
+                    Row(
+                      children: [
+                        // Pay Salary Button
+                        InkWell(
+                          onTap: () {
+                            setState(() => _activeTab = 'salary');
+                            _showDisburseSalaryDialog();
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF059669),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.attach_money_rounded, size: 14, color: Colors.white),
+                                SizedBox(width: 2),
+                                Text(
+                                  'Pay Salary',
+                                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+
+                        // Key Button
+                        InkWell(
+                          onTap: _showAuthorizeStaffDialog,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE11D48),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.vpn_key_rounded, size: 14, color: Colors.white),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+
+                        // Staff Count Box
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFF334155)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('Staff Count', style: TextStyle(fontSize: 9, color: Color(0xFF94A3B8))),
+                              Text(
+                                '${_credentials.length} Active',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFFFDA4AF)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              );
-            },
+              ),
+              const SizedBox(height: 12),
+
+              // =========================================================
+              // 2. 2-ROW NAVIGATION SWITCHER (EXACT MATCH WITH PREVIEW APP)
+              // =========================================================
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  children: [
+                    // Row 1: 3 Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavButton(
+                            tabKey: 'roster',
+                            label: 'Staff Roster (${_credentials.length})',
+                            icon: Icons.people_alt_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildNavButton(
+                            tabKey: 'salary',
+                            label: 'Staff Fees / Salary (${_salaries.length})',
+                            icon: Icons.receipt_long_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildNavButton(
+                            tabKey: 'activities',
+                            label: 'Staff Activity (${_activities.length})',
+                            icon: Icons.trending_up_rounded,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Row 2: 3 Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildNavButton(
+                            tabKey: 'directives',
+                            label: 'Directives (${_directives.length})',
+                            icon: Icons.explore_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildNavButton(
+                            tabKey: 'communication',
+                            label: 'Communication (${_commMessages.length})',
+                            icon: Icons.chat_bubble_outline_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildNavButton(
+                            tabKey: 'rbac',
+                            label: 'Permissions',
+                            icon: Icons.shield_outlined,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // =========================================================
+              // 3. TAB CONTENT
+              // =========================================================
+              if (_activeTab == 'roster')
+                _buildRosterView(filteredCredentials)
+              else if (_activeTab == 'salary')
+                _buildSalaryView()
+              else if (_activeTab == 'activities')
+                _buildActivitiesView()
+              else if (_activeTab == 'directives')
+                _buildDirectivesView()
+              else if (_activeTab == 'communication')
+                _buildCommunicationView()
+              else if (_activeTab == 'rbac')
+                _buildRbacView(),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildActivityFilterChip(String value, String label) {
-    final isSelected = _activityFilter == value;
+  Widget _buildNavButton({
+    required String tabKey,
+    required String label,
+    required IconData icon,
+  }) {
+    final isSelected = _activeTab == tabKey;
+    return InkWell(
+      onTap: () => setState(() => _activeTab = tabKey),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFE11D48) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFE11D48) : const Color(0xFFE2E8F0),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 13,
+              color: isSelected ? Colors.white : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 4),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? Colors.white : const Color(0xFF334155),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // =========================================================
+  // TAB: ROSTER (EXACT MATCH WITH SCREENSHOT_20261015_064219)
+  // =========================================================
+  Widget _buildRosterView(List<StaffCredentialItem> filteredList) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Section Header Row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Staff Credentials Roster',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Active login credentials approved by Super Admin.',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
+              ],
+            ),
+            ElevatedButton.icon(
+              onPressed: _showAuthorizeStaffDialog,
+              icon: const Icon(Icons.vpn_key_rounded, size: 14),
+              label: const Text('Staff Login Credentials', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE11D48),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Search Bar
+        TextField(
+          decoration: InputDecoration(
+            hintText: 'Search staff, email, ID...',
+            hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+            prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 18),
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          ),
+          onChanged: (val) {
+            setState(() {
+              _rosterSearch = val.trim();
+            });
+          },
+        ),
+        const SizedBox(height: 10),
+
+        // Filter Pills Row
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildFilterPill('all', 'All'),
+              const SizedBox(width: 6),
+              _buildFilterPill('principal', 'Principal'),
+              const SizedBox(width: 6),
+              _buildFilterPill('teacher', 'Teacher'),
+              const SizedBox(width: 6),
+              _buildFilterPill('class_teacher', 'Class Teacher'),
+              const SizedBox(width: 6),
+              _buildFilterPill('accountant', 'Accountant'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Staff Cards (Exactly matching screenshot cards)
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: filteredList.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final item = filteredList[index];
+            final isPasswordVisible = _revealedPasswords.contains(item.id);
+
+            // Badge styling
+            Color badgeBg = const Color(0xFFFEF3C7);
+            Color badgeText = const Color(0xFFD97706);
+            Color badgeBorder = const Color(0xFFFDE68A);
+
+            if (item.role == 'teacher') {
+              badgeBg = const Color(0xFFDBEAFE);
+              badgeText = const Color(0xFF1D4ED8);
+              badgeBorder = const Color(0xFFBFDBFE);
+            } else if (item.role == 'class_teacher') {
+              badgeBg = const Color(0xFFCCFBF1);
+              badgeText = const Color(0xFF0F766E);
+              badgeBorder = const Color(0xFF99F6E4);
+            } else if (item.role == 'accountant') {
+              badgeBg = const Color(0xFFFFE4E6);
+              badgeText = const Color(0xFFBE123C);
+              badgeBorder = const Color(0xFFFECDD3);
+            } else if (item.role == 'peon') {
+              badgeBg = const Color(0xFFFFEDD5);
+              badgeText = const Color(0xFFC2410C);
+              badgeBorder = const Color(0xFFFED7AA);
+            } else if (item.role == 'maid') {
+              badgeBg = const Color(0xFFFCE7F3);
+              badgeText = const Color(0xFFBE185D);
+              badgeBorder = const Color(0xFFFBCFE8);
+            } else if (item.role == 'security_guard') {
+              badgeBg = const Color(0xFFF3E8FF);
+              badgeText = const Color(0xFF7E22CE);
+              badgeBorder = const Color(0xFFE9D5FF);
+            } else if (item.role == 'driver') {
+              badgeBg = const Color(0xFFFEF9C3);
+              badgeText = const Color(0xFFA16207);
+              badgeBorder = const Color(0xFFFEF08A);
+            }
+
+            final bool canTestLogin = item.role == 'principal' ||
+                item.role == 'teacher' ||
+                item.role == 'class_teacher' ||
+                item.role == 'accountant';
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Card Info Row
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Avatar
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        backgroundImage: NetworkImage(item.avatarUrl),
+                      ),
+                      const SizedBox(width: 10),
+
+                      // Name, Badge, ID
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    item.fullName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: badgeBg,
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: badgeBorder),
+                                  ),
+                                  child: Text(
+                                    item.roleTitle,
+                                    style: TextStyle(
+                                      color: badgeText,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${item.employeeId} • ${item.departmentOrClass}',
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+
+                      // Top Right: Test Login + Active Badge
+                      Row(
+                        children: [
+                          if (canTestLogin)
+                            InkWell(
+                              onTap: () => _handleTestLogin(item),
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.open_in_new_rounded, size: 11, color: Color(0xFF2563EB)),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'Test Login',
+                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                            ),
+                            child: const Text(
+                              'Active',
+                              style: TextStyle(color: Color(0xFF059669), fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Bottom Grey Credentials Row
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Email: ${item.email}',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Pass: ${isPasswordVisible ? item.password : '••••••••'}',
+                          style: const TextStyle(fontSize: 11, fontFamily: 'monospace', fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                        ),
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              if (isPasswordVisible) {
+                                _revealedPasswords.remove(item.id);
+                              } else {
+                                _revealedPasswords.add(item.id);
+                              }
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: Icon(
+                              isPasswordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                              size: 15,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        InkWell(
+                          onTap: () => _copyCredentials(item),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.copy_rounded, size: 13, color: Color(0xFFE11D48)),
+                              SizedBox(width: 2),
+                              Text('Copy', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFE11D48))),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterPill(String key, String label) {
+    final isSelected = _rosterFilter == key;
     return ChoiceChip(
       label: Text(
         label,
         style: TextStyle(
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           color: isSelected ? Colors.white : const Color(0xFF475569),
         ),
       ),
       selected: isSelected,
-      selectedColor: const Color(0xFF881337),
+      selectedColor: const Color(0xFFE11D48),
       backgroundColor: const Color(0xFFF1F5F9),
-      onSelected: (_) => setState(() => _activityFilter = value),
+      onSelected: (_) => setState(() => _rosterFilter = key),
       showCheckmark: false,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
     );
   }
 
-  // ==========================================
-  // TAB 5: COMMUNICATION & BROADCAST DESK
-  // ==========================================
-  Widget _buildCommunicationTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Broadcast Composer
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.campaign_rounded, color: Color(0xFF881337), size: 20),
-                    SizedBox(width: 8),
-                    Text('Super Admin Broadcast Dispatch', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _commMessageController,
-                  maxLines: 2,
-                  decoration: const InputDecoration(
-                    hintText: 'Type announcement or message to faculty desks...',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _commTarget,
-                        decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8), border: OutlineInputBorder()),
-                        items: const [
-                          DropdownMenuItem(value: 'All Staff', child: Text('All Staff (Broadcast)')),
-                          DropdownMenuItem(value: 'Principal Office', child: Text('Principal Office')),
-                          DropdownMenuItem(value: 'Teaching Faculty', child: Text('Teaching Faculty')),
-                          DropdownMenuItem(value: 'Finance Desk', child: Text('Finance Desk')),
-                        ],
-                        onChanged: (v) {
-                          if (v != null) setState(() => _commTarget = v);
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.send_rounded, size: 16),
-                      label: const Text('Send'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF881337),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                      onPressed: () {
-                        if (_commMessageController.text.trim().isEmpty) return;
-                        final newMsg = StaffCommMessageItem(
-                          id: 'MSG_${DateTime.now().millisecondsSinceEpoch}',
-                          senderName: 'Super Admin Trustee Office',
-                          recipientName: _commTarget,
-                          message: _commMessageController.text.trim(),
-                          timestamp: 'Just now',
-                          isBroadcast: _commTarget.contains('All'),
-                          priority: _commPriority,
-                          isRead: true,
-                        );
-
-                        setState(() {
-                          _commMessages.insert(0, newMsg);
-                          _commMessageController.clear();
-                        });
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Announcement dispatched!')),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Message Feed
-          const Text('Institutional Message Stream', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
-          const SizedBox(height: 10),
-
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _commMessages.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final msg = _commMessages[index];
-              return Container(
-                padding: const EdgeInsets.all(14),
+  // =========================================================
+  // TAB: SALARY & FEES
+  // =========================================================
+  Widget _buildSalaryView() {
+    final total = _salaries.fold<double>(0, (s, e) => s + e.netAmountPaid);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -2137,31 +1958,396 @@ class _SuperAdminDashboardScreenState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(msg.senderName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
-                        Text(msg.timestamp, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
-                      ],
+                    const Text('Total Disbursed (Oct)', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    const SizedBox(height: 2),
+                    Text(
+                      '₹${NumberFormat('#,##,###').format(total)}',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
                     ),
-                    const SizedBox(height: 4),
-                    Text('To: ${msg.recipientName}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                    const SizedBox(height: 6),
-                    Text(msg.message, style: const TextStyle(fontSize: 13, color: Color(0xFF334155))),
                   ],
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Staff on Payroll', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${_salaries.length} Verified',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Disbursed Staff Salary Slips', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
+            ElevatedButton.icon(
+              onPressed: _showDisburseSalaryDialog,
+              icon: const Icon(Icons.payments_rounded, size: 14),
+              label: const Text('Pay Salary', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF059669),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _salaries.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final sal = _salaries[index];
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(sal.staffName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                          Text('${sal.roleTitle} • ${sal.employeeId}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: const Color(0xFF86EFAC)),
+                        ),
+                        child: const Text('Paid', style: TextStyle(color: Color(0xFF15803D), fontWeight: FontWeight.bold, fontSize: 10)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Net: ₹${NumberFormat('#,##,###').format(sal.netAmountPaid)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF059669))),
+                      Text(sal.paymentMode, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Voucher: ${sal.receiptVoucherNumber}', style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                      InkWell(
+                        onTap: () => _showSalarySlipModal(sal),
+                        child: const Text('View Voucher →', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
-  // ==========================================
-  // TAB 6: RBAC GOVERNANCE MATRIX
-  // ==========================================
-  Widget _buildRbacMatrixTab() {
+  // =========================================================
+  // TAB: ACTIVITIES
+  // =========================================================
+  Widget _buildActivitiesView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text('Staff Institutional Activity Stream', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
+        const SizedBox(height: 10),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _activities.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final act = _activities[index];
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE11D48).withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: const Icon(Icons.history_rounded, size: 16, color: Color(0xFFE11D48)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(act.staffName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF0F172A))),
+                            Text(act.timeAgo, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(act.action, style: const TextStyle(fontSize: 11, color: Color(0xFF334155))),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(act.category.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // =========================================================
+  // TAB: DIRECTIVES
+  // =========================================================
+  Widget _buildDirectivesView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Super Admin Official Directives', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
+            ElevatedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Directive creation desk ready.')),
+                );
+              },
+              icon: const Icon(Icons.add_rounded, size: 14),
+              label: const Text('New Directive', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE11D48),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _directives.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final dir = _directives[index];
+            final isUrgent = dir.priority == 'urgent';
+
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: isUrgent ? const Color(0xFFFECDD3) : const Color(0xFFE2E8F0),
+                  width: isUrgent ? 1.5 : 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isUrgent ? const Color(0xFFFFE4E6) : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          dir.priority.toUpperCase(),
+                          style: TextStyle(
+                            color: isUrgent ? const Color(0xFFE11D48) : const Color(0xFF475569),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(dir.category.toUpperCase(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                      const Spacer(),
+                      Text(
+                        dir.status == 'completed' ? 'Completed' : 'In Progress',
+                        style: TextStyle(
+                          color: dir.status == 'completed' ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(dir.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
+                  const SizedBox(height: 4),
+                  Text(dir.instructions, style: const TextStyle(fontSize: 11, color: Color(0xFF475569))),
+                  const SizedBox(height: 6),
+                  Text('Target: ${dir.targetStaffName} • Due: ${dir.deadline}', style: const TextStyle(fontSize: 10, color: Color(0xFF881337), fontWeight: FontWeight.w600)),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // =========================================================
+  // TAB: COMMUNICATION
+  // =========================================================
+  Widget _buildCommunicationView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Broadcast to All Staff', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _commMessageController,
+                decoration: const InputDecoration(
+                  hintText: 'Type official broadcast notice...',
+                  border: OutlineInputBorder(),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.send_rounded, size: 14),
+                  label: const Text('Broadcast Notice', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE11D48),
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    if (_commMessageController.text.trim().isEmpty) return;
+                    final msg = StaffCommMessageItem(
+                      id: 'MSG_${DateTime.now().millisecondsSinceEpoch}',
+                      senderName: 'Super Admin Office',
+                      recipientName: _commTarget,
+                      message: _commMessageController.text.trim(),
+                      timestamp: 'Just now',
+                      isBroadcast: true,
+                      priority: 'urgent',
+                      isRead: true,
+                    );
+                    setState(() {
+                      _commMessages.insert(0, msg);
+                      _commMessageController.clear();
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Notice broadcasted to all staff!')),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text('Broadcast History', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        const SizedBox(height: 8),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _commMessages.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final m = _commMessages[index];
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(m.senderName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF0F172A))),
+                      Text(m.timestamp, style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text('Audience: ${m.recipientName}', style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                  const SizedBox(height: 4),
+                  Text(m.message, style: const TextStyle(fontSize: 12, color: Color(0xFF334155))),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // =========================================================
+  // TAB: RBAC PERMISSIONS
+  // =========================================================
+  Widget _buildRbacView() {
     final permissions = [
       {'module': 'Staff Authorization & Passwords', 'superAdmin': true, 'principal': false, 'teacher': false, 'accountant': false, 'parent': false},
       {'module': 'Salary & Payroll Settlements', 'superAdmin': true, 'principal': false, 'teacher': false, 'accountant': true, 'parent': false},
@@ -2174,122 +2360,96 @@ class _SuperAdminDashboardScreenState
       {'module': 'Live Classes & Video Conferences', 'superAdmin': true, 'principal': true, 'teacher': true, 'accountant': false, 'parent': true},
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: const Color(0xFF881337).withOpacity(0.06),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF881337).withOpacity(0.2)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.shield_rounded, color: Color(0xFF881337)),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Multi-Role RBAC Security Matrix across Super Admin, Principal, Faculty, Bursar & Family portals.',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF881337)),
-                  ),
-                ),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE11D48).withOpacity(0.06),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE11D48).withOpacity(0.2)),
           ),
-          const SizedBox(height: 16),
+          child: const Row(
+            children: [
+              Icon(Icons.shield_rounded, color: Color(0xFFE11D48), size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Multi-Role RBAC Security Matrix across Super Admin, Principal, Faculty, Bursar & Family portals.',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFE11D48)),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
 
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: permissions.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final row = permissions[index];
-              return Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      row['module'] as String,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: [
-                        _buildPermChip('Super Admin', row['superAdmin'] as bool, const Color(0xFF881337)),
-                        _buildPermChip('Principal', row['principal'] as bool, const Color(0xFFB45309)),
-                        _buildPermChip('Teacher', row['teacher'] as bool, const Color(0xFF2563EB)),
-                        _buildPermChip('Accountant', row['accountant'] as bool, const Color(0xFFE11D48)),
-                        _buildPermChip('Parent/Student', row['parent'] as bool, const Color(0xFF0D9488)),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+        ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: permissions.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, index) {
+            final row = permissions[index];
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    row['module'] as String,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF0F172A)),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: [
+                      _buildPermBadge('Super Admin', row['superAdmin'] as bool, const Color(0xFF881337)),
+                      _buildPermBadge('Principal', row['principal'] as bool, const Color(0xFFB45309)),
+                      _buildPermBadge('Teacher', row['teacher'] as bool, const Color(0xFF2563EB)),
+                      _buildPermBadge('Accountant', row['accountant'] as bool, const Color(0xFFE11D48)),
+                      _buildPermBadge('Parent/Student', row['parent'] as bool, const Color(0xFF0D9488)),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildPermChip(String roleName, bool hasAccess, Color color) {
+  Widget _buildPermBadge(String roleName, bool hasAccess, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         color: hasAccess ? color.withOpacity(0.1) : const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: hasAccess ? color.withOpacity(0.3) : const Color(0xFFE2E8F0)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(hasAccess ? Icons.check_circle_rounded : Icons.cancel_rounded, size: 12, color: hasAccess ? color : const Color(0xFF94A3B8)),
-          const SizedBox(width: 4),
+          Icon(hasAccess ? Icons.check_circle_rounded : Icons.cancel_rounded, size: 11, color: hasAccess ? color : const Color(0xFF94A3B8)),
+          const SizedBox(width: 3),
           Text(
             roleName,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: hasAccess ? FontWeight.bold : FontWeight.normal,
               color: hasAccess ? color : const Color(0xFF94A3B8),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildFilterChip(String value, String label) {
-    final isSelected = _rosterFilter == value;
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          color: isSelected ? Colors.white : const Color(0xFF475569),
-        ),
-      ),
-      selected: isSelected,
-      selectedColor: const Color(0xFF881337),
-      backgroundColor: const Color(0xFFF1F5F9),
-      onSelected: (_) {
-        setState(() {
-          _rosterFilter = value;
-        });
-      },
-      showCheckmark: false,
     );
   }
 }

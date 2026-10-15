@@ -96,11 +96,19 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
             Text('Sharma Family • Rajesh & Sunita Sharma', style: TextStyle(fontSize: 11, color: Colors.blueAccent)),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded),
+            tooltip: 'Sign Out to Login',
+            onPressed: () {
+              ref.read(authControllerProvider.notifier).signOut();
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const RoleSwitcherBar(),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),

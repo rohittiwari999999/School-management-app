@@ -333,9 +333,6 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
       body: SafeArea(
         child: Column(
           children: [
-            // Persistent Role Switcher at the very top
-            const RoleSwitcherBar(),
-
             // Scrollable Content
             Expanded(
               child: SingleChildScrollView(
@@ -425,6 +422,13 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
                                     icon: const Icon(Icons.people, color: Color(0xFFA5B4FC), size: 20),
                                     tooltip: 'Student Photos',
                                     onPressed: () => _showStudentPhotoDialog(_students.first),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
+                                    tooltip: 'Sign Out to Login',
+                                    onPressed: () {
+                                      ref.read(authControllerProvider.notifier).signOut();
+                                    },
                                   ),
                                 ],
                               ),

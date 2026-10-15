@@ -154,46 +154,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Test any school persona without needing Firebase credentials:',
+                          'Select your individual persona or enter your credentials below:',
                           style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
                         ),
                         const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                        GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 2.2,
                           children: [
-                            _buildRoleChip(
+                            _buildRoleTile(
                               label: 'Super Admin',
+                              name: 'Shri Vikramaditya',
+                              email: 'superadmin@edupulse.edu',
                               icon: Icons.shield_rounded,
                               role: UserRole.superAdmin,
                               color: const Color(0xFF881337),
                             ),
-                            _buildRoleChip(
+                            _buildRoleTile(
                               label: 'Principal',
+                              name: 'Dr. Alok Verma',
+                              email: 'principal@edupulse.edu',
                               icon: Icons.admin_panel_settings_rounded,
                               role: UserRole.principal,
                               color: const Color(0xFF1E3A8A),
                             ),
-                            _buildRoleChip(
-                              label: 'Teacher',
+                            _buildRoleTile(
+                              label: 'Subject Teacher',
+                              name: 'Dr. Ananya Sen',
+                              email: 'ananya.sen@edupulse.edu',
                               icon: Icons.co_present_rounded,
                               role: UserRole.teacher,
                               color: const Color(0xFF0D9488),
                             ),
-                            _buildRoleChip(
+                            _buildRoleTile(
                               label: 'Class Teacher',
+                              name: 'Ms. Priya Sharma',
+                              email: 'priya.sharma@edupulse.edu',
                               icon: Icons.assignment_ind_rounded,
                               role: UserRole.classTeacher,
                               color: const Color(0xFF0369A1),
                             ),
-                            _buildRoleChip(
+                            _buildRoleTile(
                               label: 'Parent & Student',
+                              name: 'Sharma Family',
+                              email: 'family.sharma@edupulse.edu',
                               icon: Icons.family_restroom_rounded,
                               role: UserRole.parentStudent,
                               color: const Color(0xFF7C3AED),
                             ),
-                            _buildRoleChip(
+                            _buildRoleTile(
                               label: 'Accountant (Fees)',
+                              name: 'Mr. Vikram Goel',
+                              email: 'vikram.goel@edupulse.edu',
                               icon: Icons.account_balance_wallet_rounded,
                               role: UserRole.accountant,
                               color: const Color(0xFFEA580C),
@@ -344,8 +360,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildRoleChip({
+  Widget _buildRoleTile({
     required String label,
+    required String name,
+    required String email,
     required IconData icon,
     required UserRole role,
     required Color color,
@@ -358,21 +376,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withOpacity(0.06),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withOpacity(0.25)),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: color,
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 16, color: color),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ],

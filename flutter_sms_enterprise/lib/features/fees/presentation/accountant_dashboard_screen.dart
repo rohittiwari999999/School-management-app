@@ -572,9 +572,6 @@ class _AccountantDashboardScreenState extends ConsumerState<AccountantDashboardS
       body: SafeArea(
         child: Column(
           children: [
-            // Persistent Role Switcher at the very top (never locked out!)
-            const RoleSwitcherBar(),
-
             // Clerk Header Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -589,10 +586,21 @@ class _AccountantDashboardScreenState extends ConsumerState<AccountantDashboardS
                       Text('Mr. Vikram Goel • Fee Bursar Desk', style: TextStyle(fontSize: 11, color: Color(0xFFA5B4FC))),
                     ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.receipt_long, color: Color(0xFFA5B4FC), size: 22),
-                    tooltip: 'New Admission Slip',
-                    onPressed: _showNewAdmissionModal,
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.receipt_long, color: Color(0xFFA5B4FC), size: 22),
+                        tooltip: 'New Admission Slip',
+                        onPressed: _showNewAdmissionModal,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 22),
+                        tooltip: 'Sign Out to Login',
+                        onPressed: () {
+                          ref.read(authControllerProvider.notifier).signOut();
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),

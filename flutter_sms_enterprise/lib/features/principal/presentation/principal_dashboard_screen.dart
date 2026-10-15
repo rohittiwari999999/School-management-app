@@ -432,9 +432,6 @@ class _PrincipalDashboardScreenState extends ConsumerState<PrincipalDashboardScr
       body: SafeArea(
         child: Column(
           children: [
-            // Persistent Role Switcher at the very top (never locked out!)
-            const RoleSwitcherBar(),
-
             // Principal Header Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -449,10 +446,21 @@ class _PrincipalDashboardScreenState extends ConsumerState<PrincipalDashboardScr
                       Text('Dr. Alok Verma • EduPulse Global Academy', style: TextStyle(fontSize: 11, color: Colors.lightBlueAccent)),
                     ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.broadcast_on_home, color: Colors.lightBlueAccent, size: 24),
-                    tooltip: 'Broadcast Morning Assembly',
-                    onPressed: _launchAllHandsAssembly,
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.broadcast_on_home, color: Colors.lightBlueAccent, size: 22),
+                        tooltip: 'Broadcast Morning Assembly',
+                        onPressed: _launchAllHandsAssembly,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 22),
+                        tooltip: 'Sign Out to Login',
+                        onPressed: () {
+                          ref.read(authControllerProvider.notifier).signOut();
+                        },
+                      ),
+                    ],
                   ),
                 ],
               ),
