@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:edupulse_sms/core/utils/auth_dialog_utils.dart';
-import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 import 'package:edupulse_sms/features/fees/domain/fee_calculator.dart';
 
 class EnrolledStudentModel {
@@ -570,7 +569,7 @@ class _AccountantDashboardScreenState extends ConsumerState<AccountantDashboardS
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvoked: (didPop) {
         if (!didPop) {
           AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
         }

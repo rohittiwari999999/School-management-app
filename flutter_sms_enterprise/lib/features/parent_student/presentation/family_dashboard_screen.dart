@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:edupulse_sms/core/utils/auth_dialog_utils.dart';
-import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
 import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
 
@@ -86,7 +85,7 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvoked: (didPop) {
         if (!didPop) {
           AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
         }
@@ -329,6 +328,7 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
   ],
 ),
 ),
+),
 );
 }
 
@@ -354,7 +354,6 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
           ],
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

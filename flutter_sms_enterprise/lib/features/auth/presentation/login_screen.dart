@@ -40,7 +40,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvoked: (didPop) {
         if (!didPop) {
           SystemNavigator.pop();
         }
