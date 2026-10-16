@@ -1042,7 +1042,7 @@ class PrincipalDashboardScreen extends ConsumerWidget {
     content: `import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:edupulse_sms/features/fees/domain/fee_calculator.dart';
+import 'package:edupulse_sms/core/utils/auth_dialog_utils.dart';
 
 class AccountantDashboardScreen extends ConsumerStatefulWidget {
   const AccountantDashboardScreen({super.key});
@@ -1052,35 +1052,37 @@ class AccountantDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _AccountantDashboardScreenState extends ConsumerState<AccountantDashboardScreen> {
-  String _selectedStatus = 'all';
+  String _activeTab = 'ledger'; // 8 consoles: ledger, pos, defaulters, admissions, staff_salary, daybook, analytics, directives
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bursar & Accounts Terminal'),
-        backgroundColor: Colors.indigo.shade900,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // KPI Financial Summary
-            Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Total Billed: ₹48,500', style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text('Realized: ₹30,500', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildExecutiveBursarBanner(),
+                _buildEightButtonNavigation(),
+                if (_activeTab == 'ledger') _buildFeeLedgerTab(),
+                if (_activeTab == 'pos') _buildCounterPosTab(),
+                if (_activeTab == 'defaulters') _buildDefaultersTab(),
+                if (_activeTab == 'admissions') _buildAdmissionsTab(),
+                if (_activeTab == 'staff_salary') _buildStaffSalaryTab(),
+                if (_activeTab == 'daybook') _buildDayBookTab(),
+                if (_activeTab == 'analytics') _buildAnalyticsTab(),
+                if (_activeTab == 'directives') _buildDirectivesTab(),
+                _buildKpiSummaryCards(),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
