@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:edupulse_sms/core/constants/app_constants.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
@@ -37,19 +38,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final authState = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // App Branding & Icon
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Top Exit App Button for Mobile Phone
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          onPressed: () => SystemNavigator.pop(),
+                          icon: const Icon(Icons.power_settings_new_rounded, size: 15, color: Color(0xFFDC2626)),
+                          label: const Text(
+                            'Exit App',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFDC2626),
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            backgroundColor: const Color(0xFFFEF2F2),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              side: const BorderSide(color: Color(0xFFFECACA)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // App Branding & Icon
                   Center(
                     child: Container(
                       width: 80,
@@ -351,14 +387,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => SystemNavigator.pop(),
+                      icon: const Icon(Icons.power_settings_new_rounded, size: 16, color: Color(0xFFEF4444)),
+                      label: const Text(
+                        'Exit Application',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFDC2626),
+                        ),
+                      ),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildRoleTile({
     required String label,

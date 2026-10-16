@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/core/utils/auth_dialog_utils.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
 import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
@@ -83,29 +84,36 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
   Widget build(BuildContext context) {
     final activeChild = _children[_selectedChildIndex];
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Unified Parent & Student Portal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            Text('Sharma Family • Rajesh & Sunita Sharma', style: TextStyle(fontSize: 11, color: Colors.blueAccent)),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF0F172A),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Unified Parent & Student Portal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              Text('Sharma Family • Rajesh & Sunita Sharma', style: TextStyle(fontSize: 11, color: Colors.blueAccent)),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout_rounded),
+              tooltip: 'Sign Out / Exit App',
+              onPressed: () {
+                AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
+              },
+            ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Sign Out to Login',
-            onPressed: () {
-              ref.read(authControllerProvider.notifier).signOut();
-            },
-          ),
-        ],
-      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -346,6 +354,7 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:edupulse_sms/core/constants/app_constants.dart';
+import 'package:edupulse_sms/core/utils/auth_dialog_utils.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 
 /// Staff Credential Model matching the React Preview App Data Schema
@@ -1431,35 +1432,42 @@ class _SuperAdminDashboardScreenState
       return true;
     }).toList();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A), // Dark slate header matching top bar
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Super Admin Console',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            Text(
-              'Shri Vikramaditya Roy (Board Trustee)',
-              style: TextStyle(fontSize: 11, color: Color(0xFFFDA4AF)),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF0F172A), // Dark slate header matching top bar
+          foregroundColor: Colors.white,
+          elevation: 0,
+          title: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Super Admin Console',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              Text(
+                'Shri Vikramaditya Roy (Board Trustee)',
+                style: TextStyle(fontSize: 11, color: Color(0xFFFDA4AF)),
+              ),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout_rounded, color: Colors.white70),
+              tooltip: 'Sign Out / Exit App',
+              onPressed: () {
+                AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
+              },
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_rounded, color: Colors.white70),
-            tooltip: 'Sign Out to Login',
-            onPressed: () {
-              ref.read(authControllerProvider.notifier).signOut();
-            },
-          ),
-        ],
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -1698,8 +1706,9 @@ class _SuperAdminDashboardScreenState
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildNavButton({
     required String tabKey,

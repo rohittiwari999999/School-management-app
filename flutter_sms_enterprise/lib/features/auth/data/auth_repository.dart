@@ -87,18 +87,26 @@ class AuthRepository {
 
   /// Sign out and cleanup
   Future<void> signOut() async {
-    final user = _firebase.auth.currentUser;
-    if (user != null) {
-      final fcmToken = await _firebase.getDeviceFCMToken();
-      if (fcmToken != null) {
-        await _firebase.firestore
-            .collection(AppConstants.colUsers)
-            .doc(user.uid)
-            .update({
-          'fcmTokens': FieldValue.arrayRemove([fcmToken]),
-        }).catchError((_) {});
+    try {
+      final user = _firebase.auth.currentUser;
+      if (user != null) {
+        final fcmToken = await _firebase.getDeviceFCMToken().timeout(
+          const Duration(seconds: 1),
+          onTimeout: () => null,
+        );
+        if (fcmToken != null) {
+          await _firebase.firestore
+              .collection(AppConstants.colUsers)
+              .doc(user.uid)
+              .update({
+            'fcmTokens': FieldValue.arrayRemove([fcmToken]),
+          }).catchError((_) {});
+        }
       }
-    }
-    await _firebase.auth.signOut();
+      await _firebase.auth.signOut().timeout(
+        const Duration(seconds: 1),
+        onTimeout: () {},
+      );
+    } catch (_) {}
   }
 }

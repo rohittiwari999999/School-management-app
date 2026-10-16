@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/core/utils/auth_dialog_utils.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 import 'package:edupulse_sms/features/conference/data/conference_repository.dart';
 import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
@@ -427,44 +428,51 @@ class _PrincipalDashboardScreenState extends ConsumerState<PrincipalDashboardScr
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Principal Header Bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              color: const Color(0xFF0F172A),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Principal & Executive Console', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
-                      Text('Dr. Alok Verma • EduPulse Global Academy', style: TextStyle(fontSize: 11, color: Colors.lightBlueAccent)),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.broadcast_on_home, color: Colors.lightBlueAccent, size: 22),
-                        tooltip: 'Broadcast Morning Assembly',
-                        onPressed: _launchAllHandsAssembly,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 22),
-                        tooltip: 'Sign Out to Login',
-                        onPressed: () {
-                          ref.read(authControllerProvider.notifier).signOut();
-                        },
-                      ),
-                    ],
-                  ),
-                ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Principal Header Bar
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                color: const Color(0xFF0F172A),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Principal & Executive Console', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white)),
+                        Text('Dr. Alok Verma • EduPulse Global Academy', style: TextStyle(fontSize: 11, color: Colors.lightBlueAccent)),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.broadcast_on_home, color: Colors.lightBlueAccent, size: 22),
+                          tooltip: 'Broadcast Morning Assembly',
+                          onPressed: _launchAllHandsAssembly,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 22),
+                          tooltip: 'Sign Out / Exit App',
+                          onPressed: () {
+                            AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
 
             // Tabs Selector
             Container(
@@ -501,8 +509,9 @@ class _PrincipalDashboardScreenState extends ConsumerState<PrincipalDashboardScr
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildStaffDirectoryTab() {
     return SingleChildScrollView(

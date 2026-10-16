@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:edupulse_sms/core/utils/auth_dialog_utils.dart';
 import 'package:edupulse_sms/features/auth/presentation/auth_controller.dart';
 import 'package:edupulse_sms/features/attendance/data/attendance_repository.dart';
 import 'package:edupulse_sms/features/conference/data/conference_repository.dart';
@@ -327,7 +328,14 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
     final teacherDesignation = user?.designation ?? 'Senior Faculty & Class In-Charge';
     final teacherAvatar = user?.avatarUrl ?? _avatarPresets[0];
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
+        }
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: Column(
@@ -424,9 +432,9 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.logout_rounded, color: Colors.white70, size: 20),
-                                    tooltip: 'Sign Out to Login',
+                                    tooltip: 'Sign Out / Exit App',
                                     onPressed: () {
-                                      ref.read(authControllerProvider.notifier).signOut();
+                                      AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
                                     },
                                   ),
                                 ],
@@ -567,8 +575,9 @@ class _TeacherDashboardScreenState extends ConsumerState<TeacherDashboardScreen>
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSwitcherButton({
     required String id,

@@ -15,12 +15,29 @@ import 'package:edupulse_sms/features/communication/presentation/communication_s
 import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
 import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
 
+class RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  RouterNotifier(this._ref) {
+    _ref.listen<AuthState>(
+      authControllerProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+}
+
+final routerNotifierProvider = Provider<RouterNotifier>((ref) {
+  return RouterNotifier(ref);
+});
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authControllerProvider);
+  final notifier = ref.watch(routerNotifierProvider);
 
   return GoRouter(
     initialLocation: '/login',
+    refreshListenable: notifier,
     redirect: (BuildContext context, GoRouterState state) {
+      final authState = ref.read(authControllerProvider);
       final isAuth = authState.status == AuthStatus.authenticated;
       final isLoggingIn = state.matchedLocation == '/login';
 

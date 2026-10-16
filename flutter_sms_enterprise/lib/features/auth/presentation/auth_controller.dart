@@ -266,7 +266,9 @@ class AuthController extends StateNotifier<AuthState> {
   }
 
   Future<void> signOut() async {
-    await _repository.signOut();
-    state = const AuthState(status: AuthStatus.unauthenticated);
+    state = const AuthState(status: AuthStatus.unauthenticated, user: null);
+    try {
+      await _repository.signOut();
+    } catch (_) {}
   }
 }
