@@ -859,7 +859,7 @@ class _AccountantDashboardScreenState
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
+      onPopInvoked: (didPop) {
         if (!didPop) {
           AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
         }

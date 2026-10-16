@@ -1058,7 +1058,7 @@ class _AccountantDashboardScreenState extends ConsumerState<AccountantDashboardS
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
+      onPopInvoked: (didPop) {
         if (!didPop) AuthDialogUtils.showSignOutOrExitBottomSheet(context, ref);
       },
       child: Scaffold(
