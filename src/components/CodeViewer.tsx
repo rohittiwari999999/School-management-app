@@ -957,8 +957,12 @@ class _LiveConferenceScreenState extends ConsumerState<LiveConferenceScreen> {
     category: 'Parent & Student',
     content: `import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:edupulse_sms/core/utils/auth_dialog_utils.dart';
+import 'package:edupulse_sms/features/conference/domain/conference_models.dart';
 import 'package:edupulse_sms/features/conference/presentation/live_conference_screen.dart';
 
+// Unified Parent Portal: Sibling Switcher, Live Classes, CBSE Timetable, Reports & Fees
 class FamilyDashboardScreen extends ConsumerStatefulWidget {
   const FamilyDashboardScreen({super.key});
 
@@ -967,39 +971,45 @@ class FamilyDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
-  int _selectedChildIndex = 0;
-  final List<String> _children = ['Aarav (Class 11)', 'Rohan (Class 5)', 'Ananya (Nursery)'];
+  int _selectedChildIndex = 2; // Default to Aarav (Class 11)
+  String _activeTab = 'overview'; // 'overview', 'live_class', 'timetable', 'report_card', 'fees', 'chat', 'leave'
+
+  final _chatController = TextEditingController();
+  final _leaveReasonController = TextEditingController();
+  DateTime? _leaveStartDate;
+  DateTime? _leaveEndDate;
+  bool _paymentSuccessNotice = false;
 
   @override
   Widget build(BuildContext context) {
+    final activeChild = _children[_selectedChildIndex];
     return Scaffold(
-      appBar: AppBar(title: const Text('Unified Parent & Student Portal')),
-      body: Column(
-        children: [
-          // Sibling selector
-          SegmentedButton<int>(
-            segments: const [
-              ButtonSegment(value: 0, label: Text('Aarav (11)')),
-              ButtonSegment(value: 1, label: Text('Rohan (5)')),
-              ButtonSegment(value: 2, label: Text('Ananya (Nursery)')),
+      backgroundColor: const Color(0xFFF1F5F9),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Top Executive Banner & Sibling Switcher (Aarav, Rohan, Ananya)
+              _buildTopBanner(activeChild),
+              if (_paymentSuccessNotice) _buildSettledAlert(),
+              const SizedBox(height: 12),
+
+              // 2. 6 Navigation Consoles: Overview, Live Class, Timetable, Report Card, Fees, Chat & Leave
+              _buildNavSwitcher(),
+              const SizedBox(height: 14),
+
+              // 3. Dynamic Console Views
+              if (_activeTab == 'overview') _buildOverviewTab(activeChild)
+              else if (_activeTab == 'live_class') _buildLiveClassTab(activeChild)
+              else if (_activeTab == 'timetable') _buildTimetableTab(activeChild)
+              else if (_activeTab == 'report_card') _buildReportCardTab(activeChild)
+              else if (_activeTab == 'fees') _buildFeesTab(activeChild)
+              else if (_activeTab == 'chat' || _activeTab == 'leave') _buildChatAndLeaveTab(activeChild),
             ],
-            selected: {_selectedChildIndex},
-            onSelectionChanged: (s) => setState(() => _selectedChildIndex = s.first),
           ),
-          // Quick join live class card
-          Card(
-            margin: const EdgeInsets.all(16),
-            child: ListTile(
-              leading: const Icon(Icons.live_tv, color: Colors.red),
-              title: const Text('Live Physics Class Active'),
-              subtitle: const Text('Ms. Priya Sharma • Join Now'),
-              trailing: ElevatedButton(
-                onPressed: () {},
-                child: const Text('Join'),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
