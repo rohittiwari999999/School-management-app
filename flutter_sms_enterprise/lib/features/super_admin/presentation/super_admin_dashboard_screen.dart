@@ -1544,48 +1544,6 @@ class _SuperAdminDashboardScreenState
                     // Right Side Action Buttons
                     Row(
                       children: [
-                        // Pay Salary Button
-                        InkWell(
-                          onTap: () {
-                            setState(() => _activeTab = 'salary');
-                            _showDisburseSalaryDialog();
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF059669),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.attach_money_rounded, size: 14, color: Colors.white),
-                                SizedBox(width: 2),
-                                Text(
-                                  'Pay Salary',
-                                  style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-
-                        // Key Button
-                        InkWell(
-                          onTap: _showAuthorizeStaffDialog,
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFE11D48),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(Icons.vpn_key_rounded, size: 14, color: Colors.white),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
-
                         // Staff Count Box
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1674,10 +1632,42 @@ class _SuperAdminDashboardScreenState
                         ),
                         const SizedBox(width: 6),
                         Expanded(
-                          child: _buildNavButton(
-                            tabKey: 'rbac',
-                            label: 'Permissions',
-                            icon: Icons.shield_outlined,
+                          child: InkWell(
+                            onTap: _showAuthorizeStaffDialog,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFFF1F2),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFFFDA4AF),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.vpn_key_rounded,
+                                    size: 14,
+                                    color: Color(0xFFE11D48),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      'Staff Login Credentials',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFE11D48),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ],

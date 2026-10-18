@@ -524,31 +524,6 @@ export const SuperAdminDashboard: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2 shrink-0">
-            <button
-              onClick={() => {
-                if (staffCredentials.length > 0 && !selectedSalaryStaffId) {
-                  handleSelectStaffForSalary(staffCredentials[0].id);
-                }
-                setActiveTab('salary');
-                setShowSalaryModal(true);
-              }}
-              className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-sm"
-              title="Disburse Staff Fee / Salary"
-            >
-              <DollarSign className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">Pay Staff Fees / Salary</span>
-              <span className="xs:hidden">Pay Salary</span>
-            </button>
-
-            <button
-              onClick={() => setShowCredentialsModal(true)}
-              className="px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center space-x-1 cursor-pointer shadow-sm"
-              title="Add New Staff Credentials (Peon, Maid, Teachers)"
-            >
-              <KeyRound className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">+ Add Staff</span>
-            </button>
-
             <div className="bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700 text-right shrink-0">
               <div className="text-[10px] text-slate-400">Staff Count</div>
               <div className="text-sm sm:text-base font-black text-rose-300">{staffCredentials.length} Active</div>
@@ -652,15 +627,13 @@ export const SuperAdminDashboard: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setActiveTab('rbac')}
-            className={`py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center ${
-              activeTab === 'rbac'
-                ? 'bg-rose-600 text-white shadow-xs'
-                : 'bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200'
-            }`}
+            type="button"
+            onClick={() => setShowCredentialsModal(true)}
+            className="py-2 px-2 sm:px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 cursor-pointer text-center bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800 border border-rose-200 shadow-xs"
+            title="Create & Issue Staff Login Credentials"
           >
-            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-            <span className="truncate">Permissions</span>
+            <KeyRound className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+            <span className="truncate">Staff Login Credentials</span>
           </button>
         </div>
       </div>
