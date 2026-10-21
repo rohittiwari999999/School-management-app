@@ -45,18 +45,32 @@ jobs:
 
       - name: Set up CocoaPods
         run: |
-          sudo gem install cocoapods
-          pod --version
+          pod --version || sudo gem install cocoapods
 
-      - name: Install Project Dependencies
+      - name: Configure iOS Project and Dependencies
         working-directory: flutter_sms_enterprise
         run: |
+          echo "Backing up custom iOS configurations..."
+          mkdir -p /tmp/edupulse_ios_backup
+          [ -f ios/Runner/Info.plist ] && cp ios/Runner/Info.plist /tmp/edupulse_ios_backup/Info.plist
+          [ -f ios/Podfile ] && cp ios/Podfile /tmp/edupulse_ios_backup/Podfile
+          [ -f ios/ExportOptions.plist ] && cp ios/ExportOptions.plist /tmp/edupulse_ios_backup/ExportOptions.plist
+
+          echo "Ensuring complete iOS platform scaffolding (Runner.xcodeproj)..."
+          flutter create . --platforms=ios --org com.edupulse
+
+          echo "Restoring enterprise iOS configurations..."
+          [ -f /tmp/edupulse_ios_backup/Info.plist ] && cp /tmp/edupulse_ios_backup/Info.plist ios/Runner/Info.plist
+          [ -f /tmp/edupulse_ios_backup/Podfile ] && cp /tmp/edupulse_ios_backup/Podfile ios/Podfile
+          [ -f /tmp/edupulse_ios_backup/ExportOptions.plist ] && cp /tmp/edupulse_ios_backup/ExportOptions.plist ios/ExportOptions.plist
+
+          echo "Resolving Flutter project dependencies..."
           flutter pub get
 
       - name: Install CocoaPods Dependencies
         working-directory: flutter_sms_enterprise/ios
         run: |
-          pod install --repo-update
+          pod install --repo-update || pod install
 
       - name: Setup Apple Distribution Certificate & Profile
         if: env.BUILD_CERTIFICATE_BASE64 != ''
@@ -90,23 +104,30 @@ jobs:
 
       - name: Package Payload to .IPA
         if: env.BUILD_CERTIFICATE_BASE64 == ''
-        working-directory: flutter_sms_enterprise/build/ios/iphoneos
+        working-directory: flutter_sms_enterprise
         run: |
-          mkdir -p Payload
-          cp -r Runner.app Payload/
-          zip -r EduPulse_iOS_Release_Unsigned.ipa Payload/
+          mkdir -p dist
+          mkdir -p build/ios/iphoneos/Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
+          cd build/ios/iphoneos
+          zip -r ../../../dist/edupulse-ios-release-unsigned.ipa Payload/
+          cd ../../..
+          echo "Unsigned iOS IPA created at dist/edupulse-ios-release-unsigned.ipa"
 
       - name: Build Signed IPA with ExportOptions (When Signed)
         if: env.BUILD_CERTIFICATE_BASE64 != ''
         working-directory: flutter_sms_enterprise
         run: |
+          mkdir -p dist
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+          cp build/ios/ipa/*.ipa dist/ 2>/dev/null || true
 
       - name: Upload iOS Build Artifact (IPA)
         uses: actions/upload-artifact@v4
         with:
           name: edupulse-ios-release-ipa
           path: |
+            flutter_sms_enterprise/dist/*.ipa
             flutter_sms_enterprise/build/ios/iphoneos/*.ipa
             flutter_sms_enterprise/build/ios/archive/*.xcarchive
           retention-days: 14
