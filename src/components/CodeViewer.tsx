@@ -716,11 +716,9 @@ jobs:
         with:
           flutter-version: '3.22.x'
           channel: 'stable'
-      - name: Scaffold iOS & Install Dependencies
+      - name: Install Pods
         run: |
-          flutter create . --platforms=ios --org com.edupulse
-          flutter pub get
-          cd ios && (pod install --repo-update || pod install)
+          cd ios && pod install --repo-update
       - name: Build iOS Release Archive
         run: flutter build ios --release --no-codesign
       - name: Package Payload to .IPA

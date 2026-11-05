@@ -1402,7 +1402,7 @@ class _FamilyDashboardScreenState extends ConsumerState<FamilyDashboardScreen> {
                               'Live Physics Class In Session!',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.w800,
+                                fontWeight: FontWeight.extrabold,
                                 fontSize: 13,
                               ),
                             ),
